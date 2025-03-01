@@ -9,13 +9,15 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+
+	config "go-social-media/pkg/config"
 )
 
 // App encapsulates the application dependencies
 type App struct {
 	DB     *sql.DB
 	Router *mux.Router
-	Config Config
+	Config config.Config
 }
 
 // Initialize sets up the database connection and router
@@ -48,7 +50,7 @@ func (a *App) Initialize() error {
 
 // initializeRoutes sets up all API routes
 func (a *App) initializeRoutes() {
-	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
+	// apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 
 	// Add your routes here
 	// Example:
@@ -70,7 +72,7 @@ func (a *App) Close() {
 
 func main() {
 	// Load configuration from environment variables with defaults
-	config := Config{
+	config := config.Config{
 		DBHost:     getEnv("DB_HOST", "localhost:3306"),
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", "rkn@1234"),

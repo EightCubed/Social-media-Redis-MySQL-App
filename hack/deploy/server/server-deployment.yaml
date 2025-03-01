@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-media-app
+  labels:
+    app: social-media-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: social-media-app
+  template:
+    metadata:
+      labels:
+        app: social-media-app
+    spec:
+      containers:
+        - name: social-media-app
+          image: social-media-app:v0.0.1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              value: "password"
+            - name: DB_NAME
+              value: "blog_db"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: "/health"
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      restartPolicy: Always
