@@ -29,28 +29,11 @@ func (a *App) Initialize() error {
 		a.Config.DBHost,
 		a.Config.DBName)
 
-	log.Println("Connecting to database...")
 	var err error
-	a.DB, err = sql.Open("mysql", connectionString)
+	a.DB, err = database.DatabaseInit(connectionString, a.Config)
 	if err != nil {
-		log.Fatalf("Failed to open database connection: %v", err)
-		return fmt.Errorf("failed to open database connection: %v", err)
+		return err
 	}
-
-	err = a.DB.Ping()
-	if err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
-		return fmt.Errorf("failed to ping database: %v", err)
-	}
-	log.Println("Database connection successful.")
-
-	log.Println("Creating tables if they do not exist...")
-	err = database.CreateTables(a.DB, a.Config)
-	if err != nil {
-		log.Fatalf("Failed to create tables: %v", err)
-		return fmt.Errorf("failed to create tables: %v", err)
-	}
-	log.Println("Tables initialized successfully.")
 
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()

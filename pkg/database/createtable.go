@@ -18,7 +18,7 @@ func CreateTables(db *sql.DB, dbConfig config.Config) error {
 		return fmt.Errorf("failed to switch to database: %v", err)
 	}
 
-	log.Printf("✅ Database '%s' is ready!")
+	log.Printf("✅ Database '%s' is ready!", dbConfig.DBName)
 
 	tables := []string{
 		`CREATE TABLE IF NOT EXISTS users (
