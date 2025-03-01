@@ -49,12 +49,9 @@ func (a *App) Initialize() error {
 	return nil
 }
 
-// initializeRoutes sets up all API routes
 func (a *App) initializeRoutes() {
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 
-	// Add your routes here
-	// Example:
 	apiRouter.HandleFunc("/health", a.healthCheckHandler).Methods("GET")
 }
 
