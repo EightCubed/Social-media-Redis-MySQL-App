@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: social-media-app
-          image: social-media-app:v0.0.2
+          image: docker.io/library/social-media-app:v1.0.0
           ports:
             - containerPort: 8080
           env:
@@ -43,13 +43,13 @@ spec:
               cpu: "500m"
           readinessProbe:
             httpGet:
-              path: "/health"
+              path: /apis/v1/health
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: "/health"
+              path: /apis/v1/health
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 30

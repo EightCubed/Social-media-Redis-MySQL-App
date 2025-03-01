@@ -68,6 +68,15 @@ func (a *App) initializeRoutes() {
 
 func (a *App) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Health check endpoint hit.")
+
+	err := a.DB.Ping()
+	if err != nil {
+		log.Printf("Health check failed: Database connection error: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte(fmt.Sprintf("Database connection error: %v", err)))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -89,7 +98,7 @@ func (a *App) Close() {
 }
 
 func main() {
-	log.Println("Reading environment variables...")
+	log.Println("Reading environment variables... 123")
 
 	config := config.Config{
 		DBHost:     getEnv("DB_HOST", "localhost:3306"),
