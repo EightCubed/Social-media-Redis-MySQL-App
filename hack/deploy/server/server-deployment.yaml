@@ -16,20 +16,20 @@ spec:
     spec:
       containers:
         - name: social-media-app
-          image: social-media-app:v0.0.1
+          image: social-media-app:v0.0.2
           ports:
             - containerPort: 8080
           env:
             - name: DB_HOST
-              value: "mysql"
+              value: "mysql.default.svc.cluster.local"
             - name: DB_PORT
               value: "3306"
             - name: DB_USER
               value: "root"
             - name: DB_PASSWORD
-              value: "password"
+              value: "rootpassword"
             - name: DB_NAME
-              value: "blog_db"
+              value: "social_media_app"
             - name: REDIS_HOST
               value: "redis"
             - name: REDIS_PORT

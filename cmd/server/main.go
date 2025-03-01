@@ -11,18 +11,16 @@ import (
 	"github.com/gorilla/mux"
 
 	config "go-social-media/pkg/config"
+	database "go-social-media/pkg/database"
 )
 
-// App encapsulates the application dependencies
 type App struct {
 	DB     *sql.DB
 	Router *mux.Router
 	Config config.Config
 }
 
-// Initialize sets up the database connection and router
 func (a *App) Initialize() error {
-	// Set up database connection
 	connectionString := fmt.Sprintf("%s:%s@(%s)/%s",
 		a.Config.DBUser,
 		a.Config.DBPassword,
@@ -35,13 +33,16 @@ func (a *App) Initialize() error {
 		return fmt.Errorf("failed to open database connection: %v", err)
 	}
 
-	// Verify connection
 	err = a.DB.Ping()
 	if err != nil {
 		return fmt.Errorf("failed to ping database: %v", err)
 	}
 
-	// Initialize router and routes
+	err = database.CreateTables(a.DB)
+	if err != nil {
+		return fmt.Errorf("failed to create tables: %v", err)
+	}
+
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
 
@@ -50,20 +51,23 @@ func (a *App) Initialize() error {
 
 // initializeRoutes sets up all API routes
 func (a *App) initializeRoutes() {
-	// apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
+	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 
 	// Add your routes here
 	// Example:
-	// apiRouter.HandleFunc("/users", a.getUsers).Methods("GET")
+	apiRouter.HandleFunc("/health", a.healthCheckHandler).Methods("GET")
 }
 
-// Run starts the web server
+func (a *App) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
 func (a *App) Run() {
 	fmt.Printf("Starting server on :%s\n", a.Config.ServerPort)
 	log.Fatal(http.ListenAndServe(":"+a.Config.ServerPort, a.Router))
 }
 
-// Close cleans up resources
 func (a *App) Close() {
 	if a.DB != nil {
 		a.DB.Close()
@@ -71,16 +75,14 @@ func (a *App) Close() {
 }
 
 func main() {
-	// Load configuration from environment variables with defaults
 	config := config.Config{
 		DBHost:     getEnv("DB_HOST", "localhost:3306"),
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", "rkn@1234"),
-		DBName:     getEnv("DB_NAME", "mydatabase"), // Make sure to provide a default database name
+		DBName:     getEnv("DB_NAME", "mydatabase"),
 		ServerPort: getEnv("SERVER_PORT", "8080"),
 	}
 
-	// Initialize application
 	app := App{Config: config}
 
 	err := app.Initialize()
@@ -89,11 +91,9 @@ func main() {
 	}
 	defer app.Close()
 
-	// Start the server
 	app.Run()
 }
 
-// getEnv retrieves an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {

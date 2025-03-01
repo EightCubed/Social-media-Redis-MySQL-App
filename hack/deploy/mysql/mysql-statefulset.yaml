@@ -20,13 +20,25 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               value: "rootpassword"
             - name: MYSQL_DATABASE
-              value: "mydb"
+              value: "social_media_app"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              docker-entrypoint.sh mysqld &
+              sleep 10
+              mysql -uroot -p rootpassword -e "CREATE DATABASE IF NOT EXISTS social_media_app;"
+              wait
           ports:
             - containerPort: 3306
           volumeMounts:
             - name: mysql-storage
               mountPath: /var/lib/mysql
-      volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pv-claim
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: standard

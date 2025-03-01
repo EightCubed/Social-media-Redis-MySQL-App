@@ -2,11 +2,9 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 )
 
-func createTables(db *sql.DB) {
+func CreateTables(db *sql.DB) error {
 	tables := []string{
 		`CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,9 +44,9 @@ func createTables(db *sql.DB) {
 	for _, table := range tables {
 		_, err := db.Exec(table)
 		if err != nil {
-			log.Fatal("Error creating table:", err)
+			return err
 		}
 	}
 
-	fmt.Println("Tables created successfully!")
+	return nil
 }
