@@ -2,9 +2,24 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"go-social-media/pkg/config"
+	"log"
 )
 
-func CreateTables(db *sql.DB) error {
+func CreateTables(db *sql.DB, dbConfig config.Config) error {
+	_, err := db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbConfig.DBName))
+	if err != nil {
+		return fmt.Errorf("failed to create database: %v", err)
+	}
+
+	_, err = db.Exec(fmt.Sprintf("USE %s", dbConfig.DBName))
+	if err != nil {
+		return fmt.Errorf("failed to switch to database: %v", err)
+	}
+
+	log.Printf("✅ Database '%s' is ready!")
+
 	tables := []string{
 		`CREATE TABLE IF NOT EXISTS users (
 			id INT AUTO_INCREMENT PRIMARY KEY,
