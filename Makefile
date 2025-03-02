@@ -1,15 +1,23 @@
 DEPLOYMENT_NAME := social-media-app
 IMAGE_NAME := docker.io/library/social-media-app
 
-MAJOR_VERSION := v1
-MINOR_VERSION := 0
-PATCH_VERSION := 0
+TAG := $(shell date +"%Y%m%d-%H%M%S")
 
-TAG := $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
+PREV_TAG := $(shell cat .last_image_tag 2>/dev/null)
 
 build:
 	echo "Building image: $(TAG)"
-	minikube cache delete $(IMAGE_NAME):$(TAG)
+	kubectl scale deploy/$(DEPLOYMENT_NAME) --replicas=0
+	sleep 3
+
+	if [ ! -z "$(PREV_TAG)" ]; then \
+		minikube image rm $(IMAGE_NAME):$(PREV_TAG) || true; \
+	fi
+
 	docker build -t $(IMAGE_NAME):$(TAG) .
 	minikube image load $(IMAGE_NAME):$(TAG)
+
+	kubectl scale deploy/$(DEPLOYMENT_NAME) --replicas=1
 	kubectl rollout restart deploy/$(DEPLOYMENT_NAME)
+
+	echo "$(TAG)" > .last_image_tag

@@ -25,7 +25,6 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
-	// Get underlying SQL DB to test connection
 	sqlDB, err := gormDB.DB()
 	if err != nil {
 		log.Printf("Failed to get SQL DB from GORM: %v", err)
@@ -39,9 +38,6 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 	}
 	log.Println("Database connection successful.")
 
-	gormDB.Migrator().DropTable(&models.User{}, &models.Post{}, &models.Comment{}, &models.Like{})
-
-	// Create tables using AutoMigrate
 	log.Println("Creating tables if they do not exist...")
 	err = AutoMigrateTables(gormDB)
 	if err != nil {
