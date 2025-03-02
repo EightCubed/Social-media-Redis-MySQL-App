@@ -1,17 +1,15 @@
 package models
 
 import (
-	"time"
-
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Comment struct {
 	gorm.Model
-	Id        uuid.UUID
-	PostId    uuid.UUID
-	UserId    uuid.UUID
-	Content   string
-	CreatedAt time.Time
+	PostID  uint   `gorm:"not null;index"`
+	UserID  uint   `gorm:"not null;index"`
+	Content string `gorm:"type:text;not null"`
+
+	Post User `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE"`
+	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }

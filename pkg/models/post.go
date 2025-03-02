@@ -1,19 +1,17 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 type Post struct {
 	gorm.Model
-	ID        uint      `gorm:"primaryKey;autoIncrement"`
-	UserID    uint      `gorm:"not null;index"`
-	Title     string    `gorm:"size:255;not null"`
-	Content   string    `gorm:"type:text;not null"`
-	Views     int       `gorm:"default:0"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UserID  uint   `gorm:"not null;index"`
+	Title   string `gorm:"size:255;not null"`
+	Content string `gorm:"type:text;not null"`
+	Views   int    `gorm:"default:0"`
 
-	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	User     User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
+	Comments []Comment `gorm:"foreignKey:PostID"`
+	Likes    []Like    `gorm:"foreignKey:PostID"`
 }
