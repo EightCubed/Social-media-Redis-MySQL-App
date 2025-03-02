@@ -2,28 +2,29 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
 )
 
 func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Post user handler called", r)
+	log.Printf("[INFO] PostUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
+
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		log.Printf("Error decoding user data: %v", err)
-		http.Error(w, fmt.Sprintf("Invalid input: %v", err), http.StatusBadRequest)
+		log.Printf("[ERROR] Failed to decode request body: %v", err)
+		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
+	log.Printf("[INFO] Creating new user - Username: %s, Email: %s", user.Username, user.Email)
 	if err := h.DB.Create(&user).Error; err != nil {
-		log.Printf("Database insertion error: %v", err)
+		log.Printf("[ERROR] Database insertion failed: %v", err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("[INFO] User created successfully - ID: %d, Username: %s", user.ID, user.Username)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
-	log.Printf("Post user successfully called", w)
 }

@@ -42,7 +42,7 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/health", socialMediaHandler.HealthCheck).Methods("GET")
 
 	// User endpoints
-	apiRouter.HandleFunc("/user", socialMediaHandler.GetUser).Methods("GET")
+	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.GetUser).Methods("GET")
 	apiRouter.HandleFunc("/user", socialMediaHandler.PostUser).Methods("POST")
 	// apiRouter.HandleFunc("/user", socialMediaHandler.UpdateUser).Methods("PUT")
 	// apiRouter.HandleFunc("/user", socialMediaHandler.PatchUser).Methods("PATCH")

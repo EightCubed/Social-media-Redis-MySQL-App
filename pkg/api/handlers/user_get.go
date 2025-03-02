@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
@@ -13,27 +12,31 @@ import (
 )
 
 func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Get user handler called", r)
+	log.Printf("[INFO] GetUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
+
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
+		log.Printf("[ERROR] Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	user := models.User{}
+	var user models.User
 	result := h.DB.First(&user, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			log.Printf("[WARNING] User not found - ID: %d", id)
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, fmt.Sprintf("Database query error: %v", result.Error), http.StatusInternalServerError)
+		log.Printf("[ERROR] Database query error: %v", result.Error)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Get user successfully returned", user)
+	log.Printf("[INFO] Successfully retrieved user - ID: %d, Username: %s", user.ID, user.Username)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
