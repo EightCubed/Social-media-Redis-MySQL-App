@@ -73,8 +73,8 @@ func main() {
 
 	config := config.Config{
 		DBHost:     getEnv("DB_HOST", "mysql.default.svc.cluster.local"),
-		DBUser:     getEnv("DB_USER", ""),
-		DBPassword: getEnv("DB_PASSWORD", ""),
+		DBUser:     getEnv("DB_USER", "root"),
+		DBPassword: getEnv("DB_PASSWORD", "rootpassword"),
 		DBName:     getEnv("DB_NAME", "social_media_app"),
 		ServerPort: getEnv("SERVER_PORT", "3306"),
 	}
