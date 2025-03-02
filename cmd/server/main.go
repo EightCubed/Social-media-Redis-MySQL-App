@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 
+	"go-social-media/pkg/api/handlers"
 	config "go-social-media/pkg/config"
 	database "go-social-media/pkg/database"
 )
@@ -43,25 +44,12 @@ func (a *App) Initialize() error {
 }
 
 func (a *App) initializeRoutes() {
+	healthHandler := handlers.HandlerHealth{DB: a.DB}
+
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
-	apiRouter.HandleFunc("/health", a.healthCheckHandler).Methods("GET")
+	apiRouter.HandleFunc("/health", healthHandler.HealthCheck).Methods("GET")
 
 	log.Println("API routes initialized.")
-}
-
-func (a *App) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Health check endpoint hit.")
-
-	err := a.DB.Ping()
-	if err != nil {
-		log.Printf("Health check failed: Database connection error: %v", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte(fmt.Sprintf("Database connection error: %v", err)))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
 }
 
 func (a *App) Run() {
@@ -81,14 +69,14 @@ func (a *App) Close() {
 }
 
 func main() {
-	log.Println("Reading environment variables... 123")
+	log.Println("Reading environment variables...")
 
 	config := config.Config{
-		DBHost:     getEnv("DB_HOST", "localhost:3306"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PASSWORD", "rkn@1234"),
-		DBName:     getEnv("DB_NAME", "mydatabase"),
-		ServerPort: getEnv("SERVER_PORT", "8080"),
+		DBHost:     getEnv("DB_HOST", "mysql.default.svc.cluster.local"),
+		DBUser:     getEnv("DB_USER", ""),
+		DBPassword: getEnv("DB_PASSWORD", ""),
+		DBName:     getEnv("DB_NAME", "social_media_app"),
+		ServerPort: getEnv("SERVER_PORT", "3306"),
 	}
 
 	app := App{Config: config}
