@@ -2,10 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -16,22 +14,17 @@ import (
 )
 
 type App struct {
-	DB     *sql.DB
-	Router *mux.Router
-	Config config.Config
+	DB      *sql.DB
+	Router  *mux.Router
+	Handler handlers.SocialMediaHandler
+	Config  config.Config
 }
 
 func (a *App) Initialize() error {
 	log.Println("Initializing application...")
 
-	connectionString := fmt.Sprintf("%s:%s@(%s)/%s",
-		a.Config.DBUser,
-		a.Config.DBPassword,
-		a.Config.DBHost,
-		a.Config.DBName)
-
 	var err error
-	a.DB, err = database.DatabaseInit(connectionString, a.Config)
+	a.DB, err = database.DatabaseInit(a.Config)
 	if err != nil {
 		return err
 	}
@@ -44,10 +37,19 @@ func (a *App) Initialize() error {
 }
 
 func (a *App) initializeRoutes() {
-	healthHandler := handlers.HandlerHealth{DB: a.DB}
+	socialMediaHandler := handlers.ReturnHandler(a.Handler.DB)
 
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
-	apiRouter.HandleFunc("/health", healthHandler.HealthCheck).Methods("GET")
+
+	// Health endpoints
+	apiRouter.HandleFunc("/health", socialMediaHandler.HealthCheck).Methods("GET")
+
+	// User endpoints
+	apiRouter.HandleFunc("/user", socialMediaHandler.GetUser).Methods("GET")
+	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("POST")
+	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("PUT")
+	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("PATCH")
+	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("DELETE")
 
 	log.Println("API routes initialized.")
 }
@@ -60,23 +62,15 @@ func (a *App) Run() {
 	}
 }
 
-func (a *App) Close() {
-	if a.DB != nil {
-		log.Println("Closing database connection.")
-		a.DB.Close()
-		log.Println("Database connection closed.")
-	}
-}
-
 func main() {
 	log.Println("Reading environment variables...")
 
 	config := config.Config{
-		DBHost:     getEnv("DB_HOST", "mysql.default.svc.cluster.local"),
-		DBUser:     getEnv("DB_USER", "root"),
-		DBPassword: getEnv("DB_PASSWORD", "rootpassword"),
-		DBName:     getEnv("DB_NAME", "social_media_app"),
-		ServerPort: getEnv("SERVER_PORT", "3306"),
+		DBHost:     config.GetEnv("DB_HOST", "mysql.default.svc.cluster.local"),
+		DBUser:     config.GetEnv("DB_USER", "root"),
+		DBPassword: config.GetEnv("DB_PASSWORD", "rootpassword"),
+		DBName:     config.GetEnv("DB_NAME", "social_media_app"),
+		ServerPort: config.GetEnv("SERVER_PORT", "3306"),
 	}
 
 	app := App{Config: config}
@@ -85,17 +79,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Application failed to initialize: %v", err)
 	}
-	defer app.Close()
+	defer database.DBClose(app.DB)
 
 	app.Run()
-}
-
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Printf("Environment variable %s not set, using default: %s\n", key, defaultValue)
-		return defaultValue
-	}
-	log.Printf("Using environment variable %s: %s\n", key, value)
-	return value
 }

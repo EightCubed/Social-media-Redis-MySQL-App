@@ -1,17 +1,12 @@
 package handlers
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-type HandlerHealth struct {
-	DB *sql.DB
-}
-
-func (h HandlerHealth) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (h SocialMediaHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	log.Println("Health check endpoint hit.")
 
 	err := h.DB.Ping()

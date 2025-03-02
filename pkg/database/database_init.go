@@ -7,7 +7,13 @@ import (
 	"log"
 )
 
-func DatabaseInit(connectionString string, config config.Config) (*sql.DB, error) {
+func DatabaseInit(config config.Config) (*sql.DB, error) {
+	connectionString := fmt.Sprintf("%s:%s@(%s)/%s",
+		config.DBUser,
+		config.DBPassword,
+		config.DBHost,
+		config.DBName)
+
 	log.Println("Connecting to database...")
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
