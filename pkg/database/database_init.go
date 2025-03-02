@@ -39,6 +39,8 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 	}
 	log.Println("Database connection successful.")
 
+	gormDB.Migrator().DropTable(&models.User{}, &models.Post{}, &models.Comment{}, &models.Like{})
+
 	// Create tables using AutoMigrate
 	log.Println("Creating tables if they do not exist...")
 	err = AutoMigrateTables(gormDB)

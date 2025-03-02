@@ -70,7 +70,7 @@ func main() {
 		DBUser:     config.GetEnv("DB_USER", "root"),
 		DBPassword: config.GetEnv("DB_PASSWORD", "rootpassword"),
 		DBName:     config.GetEnv("DB_NAME", "social_media_app"),
-		ServerPort: config.GetEnv("SERVER_PORT", "3306"),
+		ServerPort: config.GetEnv("SERVER_PORT", "8080"),
 	}
 
 	app := App{Config: config}

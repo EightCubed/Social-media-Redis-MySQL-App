@@ -25,8 +25,10 @@ spec:
           args:
             - |
               docker-entrypoint.sh mysqld &
-              sleep 10
-              mysql -uroot -p rootpassword -e "CREATE DATABASE IF NOT EXISTS social_media_app;"
+              while ! mysqladmin ping -hlocalhost --silent; do
+                sleep 2
+              done
+              mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS social_media_app;"
               wait
           ports:
             - containerPort: 3306

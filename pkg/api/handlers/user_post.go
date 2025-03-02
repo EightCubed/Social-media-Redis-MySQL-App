@@ -9,8 +9,8 @@ import (
 )
 
 func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Post user handler called", r)
 	var user models.User
-
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		log.Printf("Error decoding user data: %v", err)
 		http.Error(w, fmt.Sprintf("Invalid input: %v", err), http.StatusBadRequest)
@@ -25,4 +25,5 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
+	log.Printf("Post user successfully called", w)
 }

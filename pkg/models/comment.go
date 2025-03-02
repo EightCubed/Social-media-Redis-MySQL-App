@@ -10,6 +10,6 @@ type Comment struct {
 	UserID  uint   `gorm:"not null;index"`
 	Content string `gorm:"type:text;not null"`
 
-	Post User `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE"`
+	Post Post `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE"`
 	User User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }

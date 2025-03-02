@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-social-media/pkg/models"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 )
 
 func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Get user handler called", r)
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -31,6 +33,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Get user successfully returned", user)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
