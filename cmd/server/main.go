@@ -1,11 +1,9 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 
 	"go-social-media/pkg/api/handlers"
@@ -14,10 +12,9 @@ import (
 )
 
 type App struct {
-	DB      *sql.DB
-	Router  *mux.Router
-	Handler handlers.SocialMediaHandler
-	Config  config.Config
+	DB     *database.DBConnection
+	Router *mux.Router
+	Config config.Config
 }
 
 func (a *App) Initialize() error {
@@ -37,7 +34,7 @@ func (a *App) Initialize() error {
 }
 
 func (a *App) initializeRoutes() {
-	socialMediaHandler := handlers.ReturnHandler(a.Handler.DB)
+	socialMediaHandler := handlers.ReturnHandler(a.DB.GormDB)
 
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 
@@ -46,10 +43,13 @@ func (a *App) initializeRoutes() {
 
 	// User endpoints
 	apiRouter.HandleFunc("/user", socialMediaHandler.GetUser).Methods("GET")
-	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("POST")
-	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("PUT")
-	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("PATCH")
-	apiRouter.HandleFunc("/user", socialMediaHandler.HealthCheck).Methods("DELETE")
+	apiRouter.HandleFunc("/user", socialMediaHandler.PostUser).Methods("POST")
+	// apiRouter.HandleFunc("/user", socialMediaHandler.UpdateUser).Methods("PUT")
+	// apiRouter.HandleFunc("/user", socialMediaHandler.PatchUser).Methods("PATCH")
+	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
+
+	// Post endpoints
+	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
 
 	log.Println("API routes initialized.")
 }

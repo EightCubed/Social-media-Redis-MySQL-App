@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"os"
 )
 
@@ -13,12 +12,9 @@ type Config struct {
 	ServerPort string
 }
 
-func GetEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Printf("Environment variable %s not set, using default: %s\n", key, defaultValue)
-		return defaultValue
+func GetEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
 	}
-	log.Printf("Using environment variable %s: %s\n", key, value)
-	return value
+	return fallback
 }
