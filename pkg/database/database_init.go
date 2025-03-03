@@ -17,7 +17,7 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 		config.DBHost,
 		config.DBName)
 
-	log.Println("Connecting to database...")
+	log.Printf("Connecting to database...")
 
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -36,15 +36,15 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 		log.Printf("Failed to ping database: %v", err)
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
-	log.Println("Database connection successful.")
+	log.Printf("Database connection successful.")
 
-	log.Println("Creating tables if they do not exist...")
+	log.Printf("Creating tables if they do not exist...")
 	err = AutoMigrateTables(gormDB)
 	if err != nil {
 		log.Printf("Failed to create tables: %v", err)
 		return nil, fmt.Errorf("failed to create tables: %v", err)
 	}
-	log.Println("Tables initialized successfully.")
+	log.Printf("Tables initialized successfully.")
 
 	return &DBConnection{
 		GormDB: gormDB,
@@ -63,6 +63,6 @@ func AutoMigrateTables(db *gorm.DB) error {
 		return fmt.Errorf("failed to auto-migrate tables: %v", err)
 	}
 
-	log.Println("✅ Tables migrated successfully!")
+	log.Printf("✅ Tables migrated successfully!")
 	return nil
 }

@@ -12,11 +12,11 @@ func DBClose(conn *DBConnection) {
 			return
 		}
 
-		log.Println("Closing database connection.")
+		log.Printf("Closing database connection.")
 		if err := sqlDB.Close(); err != nil {
 			log.Printf("Error closing database connection: %v", err)
 		} else {
-			log.Println("Database connection closed successfully.")
+			log.Printf("Database connection closed successfully.")
 		}
 	}
 }

@@ -7,8 +7,6 @@ import (
 )
 
 func (h *SocialMediaHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	log.Println("Health check endpoint hit.")
-
 	sqlDB, err := h.DB.DB()
 	if err != nil {
 		log.Printf("Health check failed: Unable to get SQL DB: %v", err)

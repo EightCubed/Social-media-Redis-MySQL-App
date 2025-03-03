@@ -18,7 +18,7 @@ type App struct {
 }
 
 func (a *App) Initialize() error {
-	log.Println("Initializing application...")
+	log.Printf("Initializing application...")
 
 	var err error
 	a.DB, err = database.DatabaseInit(a.Config)
@@ -29,7 +29,7 @@ func (a *App) Initialize() error {
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
 
-	log.Println("Application initialization completed successfully.")
+	log.Printf("Application initialization completed successfully.")
 	return nil
 }
 
@@ -52,7 +52,7 @@ func (a *App) initializeRoutes() {
 	// Post endpoints
 	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
 
-	log.Println("API routes initialized.")
+	log.Printf("API routes initialized.")
 }
 
 func (a *App) Run() {
@@ -64,7 +64,10 @@ func (a *App) Run() {
 }
 
 func main() {
-	log.Println("Reading environment variables...")
+	// logger, _ := zap.NewProduction()
+	// defer logger.Sync()
+
+	log.Printf("Reading environment variables...")
 
 	config := config.Config{
 		DBHost:     config.GetEnv("DB_HOST", "mysql.default.svc.cluster.local"),
