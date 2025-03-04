@@ -46,7 +46,7 @@ spec:
                   fieldPath: metadata.name
           command:
             - bash
-            - "-c"
+            - -c
             - |
               # Extract ordinal index from pod name (mysql-0, mysql-1, etc.)
               SERVER_ID=$([[ "$POD_NAME" =~ -([0-9]+)$ ]] && echo $((${BASH_REMATCH[1]} + 1)) || echo 1)
