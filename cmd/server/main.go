@@ -45,9 +45,8 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.GetUser).Methods("GET")
 	apiRouter.HandleFunc("/user", socialMediaHandler.PostUser).Methods("POST")
 	apiRouter.HandleFunc("/user", socialMediaHandler.ListUser).Methods("GET")
-	// apiRouter.HandleFunc("/user", socialMediaHandler.UpdateUser).Methods("PUT")
-	// apiRouter.HandleFunc("/user", socialMediaHandler.PatchUser).Methods("PATCH")
-	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
+	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.UpdateUser).Methods("PATCH")
+	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.DeleteUser).Methods("DELETE")
 
 	// Post endpoints
 	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
