@@ -1,15 +1,29 @@
 package main
 
 import (
+	"go-social-media/pkg/api/handlers"
+	config "go-social-media/pkg/config"
+	database "go-social-media/pkg/database"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	"go-social-media/pkg/api/handlers"
-	config "go-social-media/pkg/config"
-	database "go-social-media/pkg/database"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var (
+	httpRequestsTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(httpRequestsTotal)
+}
 
 type App struct {
 	DB     *database.DBConnection
@@ -48,8 +62,8 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.UpdateUser).Methods("PATCH")
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.DeleteUser).Methods("DELETE")
 
-	// Post endpoints
-	// apiRouter.HandleFunc("/user", socialMediaHandler.DeleteUser).Methods("DELETE")
+	// Metrics endpoint
+	a.Router.Handle("/metrics", promhttp.Handler())
 
 	log.Printf("API routes initialized.")
 }
