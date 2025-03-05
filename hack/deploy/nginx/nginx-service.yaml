@@ -1,11 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-external-service
+  name: nginx-proxy
 spec:
   type: LoadBalancer
-  ports:
-    - port: 80
-      targetPort: 80
   selector:
     app: nginx-proxy
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306

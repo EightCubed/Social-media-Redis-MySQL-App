@@ -1,33 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-init-scripts
+  name: mysql-config
 data:
-  init.sql: |
-    # This script will run on the first pod only due to StatefulSet initialization order
-    # On the primary
-    CREATE USER IF NOT EXISTS 'replication'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-    GRANT REPLICATION SLAVE ON *.* TO 'replication'@'%';
-    FLUSH PRIVILEGES;
-  configure-replica.sh: |
-    #!/bin/bash
-    # This script configures replica nodes
-
-    mysql -uroot -p"${MYSQL_PASSWORD}" -e "CREATE DATABASE IF NOT EXISTS social_media_app;"
-
-    # Skip configuration on primary (mysql-0)
-    if [[ $(hostname) == 'mysql-0' ]]; then
-      echo "This is the primary node. Skipping replica configuration."
-      exit 0
-    fi
-
-    echo "Configuring as a replica..."
-
-    until mysql -h mysql-0.mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "SELECT 1"; do
-      echo "Waiting for primary to be ready..."
-      sleep 5
-    done
-
-    # Configure replica to connect to primary using GTID
-    mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "CHANGE MASTER TO MASTER_HOST='mysql-0.mysql', MASTER_USER='replication', MASTER_PASSWORD='${MYSQL_PASSWORD}', MASTER_AUTO_POSITION=1;"
-    mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "START SLAVE;"
+  MYSQL_DATABASE: social_media_app
+  MYSQL_USER: myuser
+  REPLICATION_MODE: replica

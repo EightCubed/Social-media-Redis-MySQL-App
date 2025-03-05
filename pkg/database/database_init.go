@@ -19,6 +19,8 @@ func DatabaseInit(config config.Config) (*DBConnection, error) {
 
 	log.Printf("Connecting to database...")
 
+	log.Printf("Connection string : %v", dsn)
+
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Printf("Failed to open database connection: %v", err)

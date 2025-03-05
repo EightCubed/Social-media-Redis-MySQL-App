@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-replica-config
+data:
+  replica.cnf: |
+    [mysqld]
+    server-id=2
+    read_only=1
+    log-bin=mysql-bin
+    binlog_format=row
+    relay-log=mysql-relay-bin
+    log_bin_trust_function_creators=1

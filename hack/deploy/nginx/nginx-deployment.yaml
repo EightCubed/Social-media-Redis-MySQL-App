@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-proxy
+  name: nginx-reverse-proxy
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: nginx-proxy
@@ -24,4 +24,4 @@ spec:
       volumes:
         - name: nginx-config
           configMap:
-            name: nginx-proxy-config
+            name: nginx-config
