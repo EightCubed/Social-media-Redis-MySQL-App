@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-replica-init
+data:
+  init-replica.sh: |
+    #!/bin/bash
+
+    # Give the primary some time to initialize
+    echo "Waiting for primary to be ready..."
+    sleep 30
+
+    # Check if primary is ready
+    max_attempts=30
+    counter=0
+
+    while ! mysql -h mysql-primary -u replicator -prootpassword -e "SELECT 1" >/dev/null 2>&1; do
+      echo "Waiting for primary MySQL to be accessible... ($counter/$max_attempts)"
+      sleep 10
+      counter=$((counter+1))
+      
+      if [ $counter -eq $max_attempts ]; then
+        echo "Could not connect to primary MySQL after $max_attempts attempts. Exiting."
+        exit 1
+      fi
+    done
+
+    echo "Primary MySQL is accessible. Getting binary log position..."
+
+    # Get binary log info from primary
+    MASTER_STATUS=$(mysql -h mysql-primary -u replicator -prootpassword -e "SHOW MASTER STATUS\G")
+    MASTER_LOG_FILE=$(echo "$MASTER_STATUS" | grep "File:" | awk '{print $2}')
+    MASTER_LOG_POS=$(echo "$MASTER_STATUS" | grep "Position:" | awk '{print $2}')
+
+    echo "Primary log file: $MASTER_LOG_FILE, Position: $MASTER_LOG_POS"
+
+    # Configure replication on replica
+    mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+    STOP SLAVE;
+    CHANGE MASTER TO
+      MASTER_HOST='mysql-primary',
+      MASTER_USER='replicator',
+      MASTER_PASSWORD='rootpassword',
+      MASTER_LOG_FILE='$MASTER_LOG_FILE',
+      MASTER_LOG_POS=$MASTER_LOG_POS;
+    START SLAVE;
+    EOF
+
+    echo "Replication configured. Checking status..."
+    mysql -u root -p$MYSQL_ROOT_PASSWORD -e "SHOW SLAVE STATUS\G"
+
+    echo "Replica initialization completed."

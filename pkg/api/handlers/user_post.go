@@ -18,7 +18,7 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("[INFO] Creating new user - Username: %s, Email: %s", user.Username, user.Email)
-	if err := h.DB.Create(&user).Error; err != nil {
+	if err := h.DBWriter.Create(&user).Error; err != nil {
 		log.Printf("[ERROR] Database insertion failed: %v", err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return

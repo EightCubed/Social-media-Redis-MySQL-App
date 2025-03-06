@@ -50,6 +50,9 @@ spec:
         - name: mysql-config
           configMap:
             name: mysql-primary-config
+        - name: mysql-init
+          configMap:
+            name: mysql-init-script
   volumeClaimTemplates:
     - metadata:
         name: data

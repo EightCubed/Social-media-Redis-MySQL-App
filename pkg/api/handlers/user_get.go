@@ -23,7 +23,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	result := h.DB.First(&user, id)
+	result := h.DBReader.First(&user, id)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {

@@ -16,6 +16,24 @@ spec:
       labels:
         app: mysql-replica
     spec:
+      initContainers:
+        - name: init-replica
+          image: mysql:8.0
+          command: ["/bin/bash", "/scripts/init-replica.sh"]
+          volumeMounts:
+            - name: replica-init
+              mountPath: /scripts/
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_REPLICATION_PASSWORD
       containers:
         - name: mysql
           image: mysql:8.0
@@ -48,15 +66,30 @@ spec:
               value: mysql-primary
             - name: MYSQL_MASTER_PORT
               value: "3306"
+            - name: MYSQL_REPLICATION_USER
+              value: replicator
+            - name: MYSQL_REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_REPLICATION_PASSWORD
           volumeMounts:
             - name: mysql-config
               mountPath: /etc/mysql/conf.d
             - name: data
               mountPath: /var/lib/mysql
+            - name: mysql-init
+              mountPath: /docker-entrypoint-initdb.d/
       volumes:
         - name: mysql-config
           configMap:
             name: mysql-replica-config
+        - name: mysql-init
+          configMap:
+            name: mysql-init-script
+        - name: replica-init
+          configMap:
+            name: mysql-replica-init
   volumeClaimTemplates:
     - metadata:
         name: data

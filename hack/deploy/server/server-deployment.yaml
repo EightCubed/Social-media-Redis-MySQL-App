@@ -20,8 +20,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: DB_HOST
-              value: "mysql.default.svc.cluster.local"
+            - name: DB_WRITE_HOST
+              value: "mysql-primary.default.svc.cluster.local"
+            - name: DB_READ_HOST
+              value: "mysql-replica.default.svc.cluster.local"
             - name: DB_PORT
               value: "3306"
             - name: DB_USER

@@ -5,5 +5,6 @@ import (
 )
 
 type DBConnection struct {
-	GormDB *gorm.DB
+	GormDBWriter *gorm.DB
+	GormDBReader *gorm.DB
 }

@@ -21,7 +21,7 @@ func (h *SocialMediaHandler) DeleteUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	result := h.DB.Delete(&models.User{}, id)
+	result := h.DBWriter.Delete(&models.User{}, id)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)

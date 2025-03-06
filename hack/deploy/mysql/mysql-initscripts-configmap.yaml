@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+data:
+  create-replication-user.sql: |
+    CREATE USER IF NOT EXISTS 'replicator'@'%' IDENTIFIED BY 'rootpassword';
+    GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'%';
+    FLUSH PRIVILEGES;

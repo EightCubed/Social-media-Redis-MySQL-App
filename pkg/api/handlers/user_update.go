@@ -32,7 +32,7 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 		updates["password"] = password
 	}
 
-	result := h.DB.Model(&models.User{}).Where("id = ?", id).Updates(updates)
+	result := h.DBWriter.Model(&models.User{}).Where("id = ?", id).Updates(updates)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)

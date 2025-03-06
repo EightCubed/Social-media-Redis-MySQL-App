@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"go-social-media/pkg/database"
 	"net/http"
 
 	"gorm.io/gorm"
 )
 
 type SocialMediaHandler struct {
-	DB *gorm.DB
+	DBWriter *gorm.DB
+	DBReader *gorm.DB
 }
 type DedicatedComputeHandler interface {
 	HealthCheck(w http.ResponseWriter, r *http.Request)
@@ -18,8 +20,9 @@ type DedicatedComputeHandler interface {
 	// DeleteUser(w http.ResponseWriter, r *http.Request)
 }
 
-func ReturnHandler(db *gorm.DB) *SocialMediaHandler {
+func ReturnHandler(db *database.DBConnection) *SocialMediaHandler {
 	return &SocialMediaHandler{
-		DB: db,
+		DBWriter: db.GormDBWriter,
+		DBReader: db.GormDBReader,
 	}
 }

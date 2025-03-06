@@ -8,22 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
-
-var (
-	httpRequestsTotal = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name: "http_requests_total",
-			Help: "Total number of HTTP requests",
-		},
-	)
-)
-
-func init() {
-	prometheus.MustRegister(httpRequestsTotal)
-}
 
 type App struct {
 	DB     *database.DBConnection
@@ -35,7 +20,8 @@ func (a *App) Initialize() error {
 	log.Printf("Initializing application...")
 
 	var err error
-	a.DB, err = database.DatabaseInit(a.Config)
+	a.DB.GormDBWriter, err = database.DatabaseWriterInit(a.Config)
+	a.DB.GormDBReader, err = database.DatabaseReaderInit(a.Config)
 	if err != nil {
 		return err
 	}
@@ -48,7 +34,7 @@ func (a *App) Initialize() error {
 }
 
 func (a *App) initializeRoutes() {
-	socialMediaHandler := handlers.ReturnHandler(a.DB.GormDB)
+	socialMediaHandler := handlers.ReturnHandler(a.DB)
 
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 
@@ -63,7 +49,7 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.DeleteUser).Methods("DELETE")
 
 	// Metrics endpoint
-	a.Router.Handle("/metrics", promhttp.Handler())
+	// a.Router.Handle("/metrics", promhttp.Handler())
 
 	log.Printf("API routes initialized.")
 }
@@ -83,11 +69,12 @@ func main() {
 	log.Printf("Reading environment variables...")
 
 	config := config.Config{
-		DBHost:     config.GetEnv("DB_HOST", "mysql.default.svc.cluster.local"),
-		DBUser:     config.GetEnv("DB_USER", "root"),
-		DBPassword: config.GetEnv("DB_PASSWORD", "rootpassword"),
-		DBName:     config.GetEnv("DB_NAME", "social_media_app"),
-		ServerPort: config.GetEnv("SERVER_PORT", "8080"),
+		DBWriteHost: config.GetEnv("DB_WRITE_HOST", "mysql-primary.default.svc.cluster.local"),
+		DBReadHost:  config.GetEnv("DB_READ_HOST", "mysql-replica.default.svc.cluster.local"),
+		DBUser:      config.GetEnv("DB_USER", "root"),
+		DBPassword:  config.GetEnv("DB_PASSWORD", "rootpassword"),
+		DBName:      config.GetEnv("DB_NAME", "social_media_app"),
+		ServerPort:  config.GetEnv("SERVER_PORT", "8080"),
 	}
 
 	app := App{Config: config}

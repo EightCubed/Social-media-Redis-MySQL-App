@@ -12,7 +12,7 @@ func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 
 	var users []models.User
 
-	result := h.DB.Find(&users)
+	result := h.DBReader.Find(&users)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)

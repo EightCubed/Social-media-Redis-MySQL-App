@@ -5,11 +5,12 @@ import (
 )
 
 type Config struct {
-	DBHost     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	ServerPort string
+	DBWriteHost string
+	DBReadHost  string
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	ServerPort  string
 }
 
 func GetEnv(key, fallback string) string {
