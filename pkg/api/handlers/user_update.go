@@ -21,15 +21,22 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var updatedUser models.User
+	err = json.NewDecoder(r.Body).Decode(&updatedUser)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
 	updates := map[string]interface{}{}
-	if userName := vars["username"]; userName != "" {
-		updates["username"] = userName
+	if updatedUser.Username != "" {
+		updates["username"] = updatedUser.Username
 	}
-	if email := vars["email"]; email != "" {
-		updates["email"] = email
+	if updatedUser.Email != "" {
+		updates["email"] = updatedUser.Email
 	}
-	if password := vars["password"]; password != "" {
-		updates["password"] = password
+	if updatedUser.Password != "" {
+		updates["password"] = updatedUser.Password
 	}
 
 	result := h.DBWriter.Model(&models.User{}).Where("id = ?", id).Updates(updates)

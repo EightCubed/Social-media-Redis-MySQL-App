@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +25,9 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
+
+	cacheKey := fmt.Sprintf("user:%d", user.ID)
+	h.RedisReader.Set(cacheKey, user, 1*time.Minute)
 
 	log.Printf("[INFO] User created successfully - ID: %d, Username: %s", user.ID, user.Username)
 	w.WriteHeader(http.StatusCreated)

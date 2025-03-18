@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
@@ -19,6 +22,20 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	cacheKey := fmt.Sprintf("user:%d", id)
+
+	res, redisErr := h.RedisReader.Get(cacheKey).Result()
+	if redisErr == redis.Nil {
+		log.Printf("[INFO] Cache miss")
+	} else if redisErr != nil {
+		log.Printf("[ERROR] Failed to get cache: %v", redisErr)
+	} else {
+		fmt.Printf("[INFO] Cache hit:", res)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(res))
 		return
 	}
 
@@ -35,6 +52,8 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	h.RedisReader.Set(cacheKey, user, 1*time.Minute)
 
 	log.Printf("[INFO] Successfully retrieved user - ID: %d, Username: %s", user.ID, user.Username)
 	w.Header().Set("Content-Type", "application/json")

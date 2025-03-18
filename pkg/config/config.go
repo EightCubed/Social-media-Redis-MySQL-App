@@ -11,6 +11,8 @@ type Config struct {
 	DBPassword  string
 	DBName      string
 	ServerPort  string
+	RedisHost   string
+	RedisPort   string
 }
 
 func GetEnv(key, fallback string) string {

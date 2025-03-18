@@ -4,12 +4,14 @@ import (
 	"go-social-media/pkg/database"
 	"net/http"
 
+	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
 
 type SocialMediaHandler struct {
-	DBWriter *gorm.DB
-	DBReader *gorm.DB
+	DBWriter    *gorm.DB
+	DBReader    *gorm.DB
+	RedisReader *redis.Client
 }
 type DedicatedComputeHandler interface {
 	HealthCheck(w http.ResponseWriter, r *http.Request)
