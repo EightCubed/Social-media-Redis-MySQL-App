@@ -19,9 +19,14 @@ type App struct {
 func (a *App) Initialize() error {
 	log.Printf("Initializing application...")
 
+	a.DB = &database.DBConnection{}
+
 	var err error
-	a.DB.GormDBWriter, err = database.DatabaseWriterInit(a.Config)
 	a.DB.GormDBReader, err = database.DatabaseReaderInit(a.Config)
+	if err != nil {
+		return err
+	}
+	a.DB.GormDBWriter, err = database.DatabaseWriterInit(a.Config)
 	if err != nil {
 		return err
 	}

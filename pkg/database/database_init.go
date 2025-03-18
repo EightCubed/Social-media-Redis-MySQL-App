@@ -17,13 +17,13 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 		config.DBWriteHost,
 		config.DBName)
 
-	log.Printf("Connecting to database...")
+	log.Printf("Connecting to write database...")
 
 	log.Printf("Connection string : %v", dsn)
 
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Printf("Failed to open database connection: %v", err)
+		log.Printf("Failed to open write database connection: %v", err)
 		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
@@ -38,7 +38,7 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 		log.Printf("Failed to ping database: %v", err)
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
-	log.Printf("Database connection successful.")
+	log.Printf("Write Database connection successful.")
 
 	log.Printf("Creating tables if they do not exist...")
 	err = AutoMigrateTables(gormDB)
@@ -58,13 +58,13 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 		config.DBReadHost,
 		config.DBName)
 
-	log.Printf("Connecting to database...")
+	log.Printf("Connecting to read database...")
 
 	log.Printf("Connection string : %v", dsn)
 
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Printf("Failed to open database connection: %v", err)
+		log.Printf("Failed to open read database connection: %v", err)
 		return nil, fmt.Errorf("failed to open database connection: %v", err)
 	}
 
@@ -79,15 +79,7 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 		log.Printf("Failed to ping database: %v", err)
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
-	log.Printf("Database connection successful.")
-
-	log.Printf("Creating tables if they do not exist...")
-	err = AutoMigrateTables(gormDB)
-	if err != nil {
-		log.Printf("Failed to create tables: %v", err)
-		return nil, fmt.Errorf("failed to create tables: %v", err)
-	}
-	log.Printf("Tables initialized successfully.")
+	log.Printf("Read Database connection successful.")
 
 	return gormDB, nil
 }
