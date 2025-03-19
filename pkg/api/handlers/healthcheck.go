@@ -23,6 +23,12 @@ func (h *SocialMediaHandler) HealthCheck(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	pong, err := h.RedisReader.Ping().Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	fmt.Println("Connected to Redis:", pong)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"go-social-media/pkg/api/handlers"
 	config "go-social-media/pkg/config"
 	database "go-social-media/pkg/database"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
@@ -17,6 +17,11 @@ type App struct {
 	DB          *database.DBConnection
 	Router      *mux.Router
 	Config      config.Config
+}
+
+func (a *App) startViewSync(interval time.Duration) {
+	log.Printf("[INFO] Started Redis-to-MySQL view sync every %v", interval)
+	handlers.SyncViewsToDB(a.DB, a.RedisClient)
 }
 
 func (a *App) Initialize() error {
@@ -39,12 +44,6 @@ func (a *App) Initialize() error {
 		Password: "",
 		DB:       0,
 	})
-
-	pong, err := a.RedisClient.Ping().Result()
-	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
-	}
-	fmt.Println("Connected to Redis:", pong)
 
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
@@ -113,6 +112,8 @@ func main() {
 		log.Fatalf("Application failed to initialize: %v", err)
 	}
 	defer database.DBClose(app.DB)
+
+	// app.startViewSync(5 * time.Minute)
 
 	app.Run()
 }

@@ -19,8 +19,6 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 
 	log.Printf("Connecting to write database...")
 
-	log.Printf("Connection string : %v", dsn)
-
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Printf("Failed to open write database connection: %v", err)
@@ -59,8 +57,6 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 		config.DBName)
 
 	log.Printf("Connecting to read database...")
-
-	log.Printf("Connection string : %v", dsn)
 
 	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
