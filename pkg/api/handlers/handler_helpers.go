@@ -22,9 +22,10 @@ type DedicatedComputeHandler interface {
 	// DeleteUser(w http.ResponseWriter, r *http.Request)
 }
 
-func ReturnHandler(db *database.DBConnection) *SocialMediaHandler {
+func ReturnHandler(db *database.DBConnection, redisClient *redis.Client) *SocialMediaHandler {
 	return &SocialMediaHandler{
-		DBWriter: db.GormDBWriter,
-		DBReader: db.GormDBReader,
+		DBWriter:    db.GormDBWriter,
+		DBReader:    db.GormDBReader,
+		RedisReader: redisClient,
 	}
 }

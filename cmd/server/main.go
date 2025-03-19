@@ -54,7 +54,7 @@ func (a *App) Initialize() error {
 }
 
 func (a *App) initializeRoutes() {
-	socialMediaHandler := handlers.ReturnHandler(a.DB)
+	socialMediaHandler := handlers.ReturnHandler(a.DB, a.RedisClient)
 
 	apiRouter := a.Router.PathPrefix("/apis/v1").Subrouter()
 

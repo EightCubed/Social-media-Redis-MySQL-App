@@ -27,7 +27,14 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cacheKey := fmt.Sprintf("user:%d", user.ID)
-	h.RedisReader.Set(cacheKey, user, 1*time.Minute)
+	marshalledUser, err := json.Marshal(user)
+	if err != nil {
+		log.Printf("[ERROR] Marshal error: %v", err)
+	}
+	err = h.RedisReader.Set(cacheKey, marshalledUser, 1*time.Minute).Err()
+	if err != nil {
+		log.Printf("[ERROR] Cache set error: %v", err)
+	}
 
 	log.Printf("[INFO] User created successfully - ID: %d, Username: %s", user.ID, user.Username)
 	w.WriteHeader(http.StatusCreated)

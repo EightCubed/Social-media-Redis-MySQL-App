@@ -20,7 +20,7 @@ func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	} else if redisErr != nil {
 		log.Printf("[ERROR] Failed to get cache: %v", redisErr)
 	} else {
-		fmt.Printf("[INFO] Cache hit:", res)
+		fmt.Printf("[INFO] Cache hit:")
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(res))
 		return
@@ -36,7 +36,14 @@ func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.RedisReader.Set("userlist", users, 1*time.Minute)
+	marshalledUser, err := json.Marshal(users)
+	if err != nil {
+		log.Printf("[ERROR] Marshal error: %v", err)
+	}
+	err = h.RedisReader.Set("userlist", marshalledUser, 1*time.Minute).Err()
+	if err != nil {
+		log.Printf("[ERROR] Cache set error: %v", err)
+	}
 
 	log.Printf("[INFO] Successfully retrieved list")
 	w.Header().Set("Content-Type", "application/json")
