@@ -77,7 +77,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledPost, 5*time.Minute).Err()
+	err = h.RedisReader.Set(cacheKey, marshalledPost, 30*time.Second).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}
