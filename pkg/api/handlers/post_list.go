@@ -40,7 +40,7 @@ func (h *SocialMediaHandler) ListPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set("postlist", marshalledPost, 1*time.Minute).Err()
+	err = h.RedisReader.Set("postlist", marshalledPost, 30*time.Second).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}

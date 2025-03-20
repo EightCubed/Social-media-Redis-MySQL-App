@@ -57,7 +57,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledUser, 1*time.Minute).Err()
+	err = h.RedisReader.Set(cacheKey, marshalledUser, 30*time.Second).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}

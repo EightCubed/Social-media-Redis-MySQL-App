@@ -19,6 +19,9 @@ func (h *SocialMediaHandler) PostPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Initialize views to 0
+	post.Views = 0
+
 	log.Printf("[INFO] Creating new post - Title: %s, PostID: %s", post.Title, post.UserID)
 	if err := h.DBWriter.Create(&post).Error; err != nil {
 		log.Printf("[ERROR] Database insertion failed: %v", err)
@@ -26,15 +29,12 @@ func (h *SocialMediaHandler) PostPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Initialize views to 0
-	post.Views = 0
-
 	cacheKey := fmt.Sprintf("post:%d", post.ID)
 	marshalledPost, err := json.Marshal(post)
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledPost, 1*time.Minute).Err()
+	err = h.RedisReader.Set(cacheKey, marshalledPost, 30*time.Second).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}

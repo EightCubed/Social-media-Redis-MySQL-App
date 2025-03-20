@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -51,6 +53,19 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 		log.Printf("[WARN] No user found with ID: %d", id)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
+	}
+
+	var resultUser models.User
+	result = h.DBReader.First(&resultUser, id)
+
+	cacheKey := fmt.Sprintf("post:%d", resultUser.ID)
+	marshalledUser, err := json.Marshal(resultUser)
+	if err != nil {
+		log.Printf("[ERROR] Marshal error: %v", err)
+	}
+	err = h.RedisReader.Set(cacheKey, marshalledUser, 30*time.Second).Err()
+	if err != nil {
+		log.Printf("[ERROR] Cache set error: %v", err)
 	}
 
 	log.Printf("[INFO] Successfully updated user with ID: %d", id)
