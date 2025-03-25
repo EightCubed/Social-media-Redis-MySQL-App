@@ -30,13 +30,17 @@ func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client, interva
 	defer ticker.Stop()
 
 	for range ticker.C {
-		keys, err := redisClient.Keys("post:*:views").Result()
+		viewKeys, err := redisClient.Keys("post:*:views").Result()
 		if err != nil {
-			log.Printf("[ERROR] Failed to fetch Redis keys: %v", err)
+			log.Printf("[ERROR] Failed to fetch Redis view keys: %v", err)
 			continue
 		}
 
-		for _, key := range keys {
+		if len(viewKeys) == 0 {
+			log.Printf("[INFO] No keys to update")
+		}
+
+		for _, key := range viewKeys {
 			postID, _ := strconv.Atoi(key[5 : len(key)-6])
 			views, err := redisClient.Get(key).Int()
 			if err != nil {
@@ -49,16 +53,25 @@ func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client, interva
 				if result.Error != nil {
 					log.Printf("[ERROR] Failed to update views in DB: %v", result.Error)
 				} else {
+					var post models.Post
+					var result *gorm.DB
+					result = db.GormDBWriter.First(&post, postID)
+
+					if result.Error != nil {
+						if result.Error == gorm.ErrRecordNotFound {
+							log.Printf("[WARNING] Post not found - ID: %d", key)
+						}
+						log.Printf("[ERROR] Database query error: %v", result.Error)
+					}
 					log.Printf("[INFO] Flushed %d views to MySQL for post %d", views, postID)
-					redisClient.Del(key)
+					log.Printf("[INFO] Updated post", post)
 				}
 			}
+		}
 
-			err = redisClient.Del(key).Err()
-			if err != nil {
-				log.Printf("[ERROR] Failed to delete views for %s: %v", key, err)
-				continue
-			}
+		err = redisClient.FlushDB().Err()
+		if err != nil {
+			log.Printf("[ERROR] Redis flush error: %v", err)
 		}
 	}
 }

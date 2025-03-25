@@ -116,7 +116,7 @@ func main() {
 	}
 	defer database.DBClose(app.DB)
 
-	app.startViewSync(handlers.CACHE_DURATION_SHORT)
+	app.startViewSync(handlers.CACHE_DURATION_LONG)
 
 	app.Run()
 }

@@ -32,9 +32,9 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	postResult, redisPostErr := h.RedisReader.Get(postKey).Result()
 	if redisPostErr == redis.Nil || redisPostErr != nil {
 		if redisPostErr == redis.Nil {
-			log.Printf("[INFO] Cache miss")
+			log.Printf("[INFO] Cache post miss")
 		} else {
-			log.Printf("[ERROR] Failed to get cache: %v", redisPostErr)
+			log.Printf("[ERROR] Failed to get post cache: %v", redisPostErr)
 		}
 
 		var result *gorm.DB
@@ -54,12 +54,12 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		var viewCounter int
 		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
 		if redisViewErr == redis.Nil {
-			log.Printf("[INFO] Cache miss")
+			log.Printf("[INFO] Cache views miss")
 		} else if redisViewErr != nil {
-			log.Printf("[ERROR] Failed to get cache: %v", redisViewErr)
+			log.Printf("[ERROR] Failed to get views cache: %v", redisViewErr)
 		} else {
 			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
-				log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
+				log.Printf("[ERROR] Failed to unmarshal cached views: %v", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			} else {
 				post.Views = viewCounter
@@ -72,23 +72,23 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		// Caching post
 		marshalledPost, err := json.Marshal(post)
 		if err != nil {
-			log.Printf("[ERROR] Marshal error: %v", err)
+			log.Printf("[ERROR] Marshal post error: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
-		err = h.RedisReader.Set(postKey, marshalledPost, CACHE_DURATION_LONG).Err()
+		err = h.RedisReader.Set(postKey, marshalledPost, CACHE_DURATION_VERY_LONG).Err()
 		if err != nil {
-			log.Printf("[ERROR] Cache set error: %v", err)
+			log.Printf("[ERROR] Cache post set error: %v", err)
 		}
 
 		// Caching updated views
-		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_LONG).Err()
+		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_VERY_LONG).Err()
 		if err != nil {
 			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
 		}
 	} else {
-		log.Printf("[INFO] Cache hit")
+		log.Printf("[INFO] Cache post hit")
 		if err := json.Unmarshal([]byte(postResult), &post); err != nil {
 			log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -98,12 +98,12 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		var viewCounter int
 		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
 		if redisViewErr == redis.Nil {
-			log.Printf("[INFO] Cache miss")
+			log.Printf("[INFO] Cache views miss")
 		} else if redisViewErr != nil {
-			log.Printf("[ERROR] Failed to get cache: %v", redisViewErr)
+			log.Printf("[ERROR] Failed to get cache views: %v", redisViewErr)
 		} else {
 			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
-				log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
+				log.Printf("[ERROR] Failed to unmarshal cached views: %v", err)
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
 			} else {
 				post.Views = viewCounter
@@ -114,7 +114,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		post.Views += 1
 
 		// Caching updated views
-		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_LONG).Err()
+		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_VERY_LONG).Err()
 		if err != nil {
 			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
 		}
