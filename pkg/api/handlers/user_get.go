@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
@@ -57,7 +56,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledUser, 30*time.Second).Err()
+	err = h.RedisReader.Set(cacheKey, marshalledUser, CACHE_DURATION_LONG).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}

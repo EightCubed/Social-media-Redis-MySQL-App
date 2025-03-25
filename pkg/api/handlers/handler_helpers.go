@@ -25,8 +25,8 @@ func ReturnHandler(db *database.DBConnection, redisClient *redis.Client) *Social
 	}
 }
 
-func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client) {
-	ticker := time.NewTicker(1 * time.Minute)
+func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
@@ -45,13 +45,19 @@ func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client) {
 			}
 
 			if views > 0 {
-				result := db.GormDBWriter.Model(&models.Post{}).Where("id = ?", postID).Update("views", gorm.Expr("views + ?", views))
+				result := db.GormDBWriter.Model(&models.Post{}).Where("id = ?", postID).Update("views", views)
 				if result.Error != nil {
 					log.Printf("[ERROR] Failed to update views in DB: %v", result.Error)
 				} else {
 					log.Printf("[INFO] Flushed %d views to MySQL for post %d", views, postID)
 					redisClient.Del(key)
 				}
+			}
+
+			err = redisClient.Del(key).Err()
+			if err != nil {
+				log.Printf("[ERROR] Failed to delete views for %s: %v", key, err)
+				continue
 			}
 		}
 	}

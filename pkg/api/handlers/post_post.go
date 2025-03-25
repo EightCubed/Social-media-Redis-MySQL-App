@@ -6,7 +6,6 @@ import (
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
-	"time"
 )
 
 func (h *SocialMediaHandler) PostPost(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +33,7 @@ func (h *SocialMediaHandler) PostPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledPost, 30*time.Second).Err()
+	err = h.RedisReader.Set(cacheKey, marshalledPost, CACHE_DURATION_LONG).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}

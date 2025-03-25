@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
@@ -25,71 +24,101 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cacheKey := fmt.Sprintf("post:%d", id)
+	var post models.Post
+
+	postKey := fmt.Sprintf("post:%d", id)
 	viewsKey := fmt.Sprintf("post:%d:views", id)
 
-	res, redisErr := h.RedisReader.Get(cacheKey).Result()
-	if redisErr == redis.Nil {
-		log.Printf("[INFO] Cache miss")
-	} else if redisErr != nil {
-		log.Printf("[ERROR] Failed to get cache: %v", redisErr)
-	} else {
-		log.Printf("[INFO] Cache hit")
+	postResult, redisPostErr := h.RedisReader.Get(postKey).Result()
+	if redisPostErr == redis.Nil || redisPostErr != nil {
+		if redisPostErr == redis.Nil {
+			log.Printf("[INFO] Cache miss")
+		} else {
+			log.Printf("[ERROR] Failed to get cache: %v", redisPostErr)
+		}
 
-		newViews, err := h.RedisReader.Incr(viewsKey).Result()
-		if err != nil {
-			log.Printf("[ERROR] Failed to increment views in Redis: %v", err)
-			http.Error(w, "Failed to increment views", http.StatusInternalServerError)
+		var result *gorm.DB
+		result = h.DBReader.First(&post, id)
+
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				log.Printf("[WARNING] Post not found - ID: %d", id)
+				http.Error(w, "Post not found", http.StatusNotFound)
+				return
+			}
+			log.Printf("[ERROR] Database query error: %v", result.Error)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
-		var post models.Post
-		if err := json.Unmarshal([]byte(res), &post); err != nil {
+		var viewCounter int
+		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
+		if redisViewErr == redis.Nil {
+			log.Printf("[INFO] Cache miss")
+		} else if redisViewErr != nil {
+			log.Printf("[ERROR] Failed to get cache: %v", redisViewErr)
+		} else {
+			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
+				log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			} else {
+				post.Views = viewCounter
+			}
+		}
+
+		// Incrementing post views
+		post.Views += 1
+
+		// Caching post
+		marshalledPost, err := json.Marshal(post)
+		if err != nil {
+			log.Printf("[ERROR] Marshal error: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		err = h.RedisReader.Set(postKey, marshalledPost, CACHE_DURATION_LONG).Err()
+		if err != nil {
+			log.Printf("[ERROR] Cache set error: %v", err)
+		}
+
+		// Caching updated views
+		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_LONG).Err()
+		if err != nil {
+			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
+		}
+	} else {
+		log.Printf("[INFO] Cache hit")
+		if err := json.Unmarshal([]byte(postResult), &post); err != nil {
 			log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
-		post.Views = int(newViews)
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(post)
-		return
-	}
-
-	var post models.Post
-	result := h.DBReader.First(&post, id)
-
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			log.Printf("[WARNING] Post not found - ID: %d", id)
-			http.Error(w, "Post not found", http.StatusNotFound)
-			return
+		var viewCounter int
+		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
+		if redisViewErr == redis.Nil {
+			log.Printf("[INFO] Cache miss")
+		} else if redisViewErr != nil {
+			log.Printf("[ERROR] Failed to get cache: %v", redisViewErr)
+		} else {
+			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
+				log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			} else {
+				post.Views = viewCounter
+			}
 		}
-		log.Printf("[ERROR] Database query error: %v", result.Error)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
 
-	marshalledPost, err := json.Marshal(post)
-	if err != nil {
-		log.Printf("[ERROR] Marshal error: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	err = h.RedisReader.Set(cacheKey, marshalledPost, 30*time.Second).Err()
-	if err != nil {
-		log.Printf("[ERROR] Cache set error: %v", err)
-	}
+		// Incrementing post views
+		post.Views += 1
 
-	newViews, err := h.RedisReader.IncrBy(viewsKey, int64(post.Views+1)).Result()
-	if err != nil {
-		log.Printf("[ERROR] Failed to set initial views in Redis: %v", err)
-		http.Error(w, "Failed to set initial views", http.StatusInternalServerError)
-		return
+		// Caching updated views
+		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_LONG).Err()
+		if err != nil {
+			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
+		}
 	}
-
-	post.Views = int(newViews)
 
 	log.Printf("[INFO] Successfully retrieved Post - ID: %d, Title: %s, Views: %d", post.ID, post.Title, post.Views)
 	w.Header().Set("Content-Type", "application/json")

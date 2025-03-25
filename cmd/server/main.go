@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go-social-media/pkg/api/handlers"
 	config "go-social-media/pkg/config"
 	database "go-social-media/pkg/database"
@@ -21,7 +22,7 @@ type App struct {
 
 func (a *App) startViewSync(interval time.Duration) {
 	log.Printf("[INFO] Started Redis-to-MySQL view sync every %v", interval)
-	handlers.SyncViewsToDB(a.DB, a.RedisClient)
+	go handlers.SyncViewsToDB(a.DB, a.RedisClient, interval)
 }
 
 func (a *App) Initialize() error {
@@ -39,8 +40,10 @@ func (a *App) Initialize() error {
 		return err
 	}
 
+	redisAddress := fmt.Sprintf("%s:%s", a.Config.RedisHost, a.Config.RedisPort)
+
 	a.RedisClient = redis.NewClient(&redis.Options{
-		Addr:     a.Config.RedisHost + ":" + a.Config.RedisPort,
+		Addr:     redisAddress,
 		Password: "",
 		DB:       0,
 	})
@@ -113,7 +116,7 @@ func main() {
 	}
 	defer database.DBClose(app.DB)
 
-	// app.startViewSync(5 * time.Minute)
+	app.startViewSync(handlers.CACHE_DURATION_SHORT)
 
 	app.Run()
 }

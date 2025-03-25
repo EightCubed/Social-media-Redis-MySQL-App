@@ -6,7 +6,6 @@ import (
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/go-redis/redis"
 )
@@ -14,7 +13,7 @@ import (
 func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] ListUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
-	res, redisErr := h.RedisReader.Get("userlist").Result()
+	res, redisErr := h.RedisReader.Get(USER_LIST_CACHE_KEY).Result()
 	if redisErr == redis.Nil {
 		log.Printf("[INFO] Cache miss")
 	} else if redisErr != nil {
@@ -40,7 +39,7 @@ func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
 	}
-	err = h.RedisReader.Set("userlist", marshalledUser, 30*time.Second).Err()
+	err = h.RedisReader.Set(USER_LIST_CACHE_KEY, marshalledUser, CACHE_DURATION_LONG).Err()
 	if err != nil {
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}
