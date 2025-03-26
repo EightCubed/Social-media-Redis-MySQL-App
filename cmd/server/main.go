@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"go-social-media/pkg/api/handlers"
 	config "go-social-media/pkg/config"
 	database "go-social-media/pkg/database"
 	"log"
+	"net"
 	"net/http"
-	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -19,15 +23,15 @@ type App struct {
 	DB          *database.DBConnection
 	Router      *mux.Router
 	Config      config.Config
+	Server      *http.Server
+	cancelFunc  context.CancelFunc
 }
 
-func (a *App) startViewSync(interval time.Duration) {
-	log.Printf("[INFO] Started Redis-to-MySQL view sync every %v", interval)
-	go handlers.SyncViewsToDB(a.DB, a.RedisClient, interval)
-}
-
-func (a *App) Initialize() error {
+func (a *App) Initialize(ctx context.Context) error {
 	log.Printf("Initializing application...")
+
+	ctx, cancel := context.WithCancel(ctx)
+	a.cancelFunc = cancel
 
 	a.DB = &database.DBConnection{}
 
@@ -57,6 +61,20 @@ func (a *App) Initialize() error {
 
 	a.Router = mux.NewRouter()
 	a.initializeRoutes()
+
+	// Create HTTP Server with context support
+	a.Server = &http.Server{
+		Addr:              ":" + a.Config.ServerPort,
+		Handler:           a.Router,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+		ReadHeaderTimeout: 2 * time.Second,
+		BaseContext: func(l net.Listener) context.Context {
+			return ctx
+		},
+	}
 
 	log.Printf("Application initialization completed successfully.")
 	return nil
@@ -94,28 +112,57 @@ func (a *App) initializeRoutes() {
 	log.Printf("API routes initialized.")
 }
 
-func (a *App) Run() {
-	srv := &http.Server{
-		Addr:              ":" + a.Config.ServerPort,
-		Handler:           a.Router,
-		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       120 * time.Second,
-		MaxHeaderBytes:    1 << 20,
-		ReadHeaderTimeout: 2 * time.Second,
+func (a *App) Run(ctx context.Context) error {
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("Starting server on port %s...\n", a.Config.ServerPort)
+		if err := a.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("HTTP server ListenAndServe: %v", err)
+		}
+	}()
+
+	go a.startViewSync(ctx, handlers.CACHE_DURATION_LONG)
+
+	<-stopChan
+	log.Println("Shutting down gracefully...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer shutdownCancel()
+
+	if err := a.Server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
 	}
-	log.Printf("Starting server on port %s...\n", a.Config.ServerPort)
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Fatalf("Server failed to start: %v", err)
+
+	if a.cancelFunc != nil {
+		a.cancelFunc()
+	}
+
+	database.DBClose(a.DB)
+
+	return nil
+}
+
+func (a *App) startViewSync(ctx context.Context, interval time.Duration) {
+	log.Printf("[INFO] Started Redis-to-MySQL view sync every %v", interval)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("View sync goroutine shutting down")
+			return
+		case <-ticker.C:
+			handlers.SyncViewsToDB(a.DB, a.RedisClient, interval)
+		}
 	}
 }
 
 func main() {
-	// logger, _ := zap.NewProduction()
-	// defer logger.Sync()
-
-	log.Printf("Reading environment variables...")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	config := config.Config{
 		DBWriteHost: config.GetEnv("DB_WRITE_HOST", "mysql-primary.default.svc.cluster.local"),
@@ -130,17 +177,12 @@ func main() {
 
 	app := App{Config: config}
 
-	err := app.Initialize()
+	err := app.Initialize(ctx)
 	if err != nil {
 		log.Fatalf("Application failed to initialize: %v", err)
 	}
-	defer database.DBClose(app.DB)
 
-	app.startViewSync(handlers.CACHE_DURATION_LONG)
-
-	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:6060", nil)) // Expose pprof endpoint
-	}()
-
-	app.Run()
+	if err := app.Run(ctx); err != nil {
+		log.Fatalf("Application run error: %v", err)
+	}
 }

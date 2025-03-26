@@ -22,7 +22,7 @@ func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 
 	userIDParam := r.URL.Query().Get("user_id")
 	userID, err := strconv.Atoi(userIDParam)
-	if err != nil || userID == 0 {
+	if err != nil || userID <= 0 {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
@@ -44,7 +44,7 @@ func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ERROR] Failed to increment views - Key: %s, Error: %v", likesKey, err)
 	}
 
-	log.Printf("[INFO] Like added successfully - PostID: %d, UserID: %s", like.ID, like.UserID)
+	log.Printf("[INFO] Like added successfully - PostID: %d, UserID: %s", like.PostID, like.UserID)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Like added successfully"})
 }
