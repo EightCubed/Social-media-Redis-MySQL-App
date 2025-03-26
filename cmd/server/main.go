@@ -84,6 +84,10 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.UpdatePost).Methods("PATCH")
 	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.DeletePost).Methods("DELETE")
 
+	// Like endpoints
+	apiRouter.HandleFunc("/post/{id:[0-9]+}/likes/", socialMediaHandler.LikePost).Methods("POST")
+	apiRouter.HandleFunc("/post/{id:[0-9]+}/likes/", socialMediaHandler.LikeDelete).Methods("DELETE")
+
 	// Metrics endpoint
 	// a.Router.Handle("/metrics", promhttp.Handler())
 

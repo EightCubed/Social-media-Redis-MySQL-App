@@ -29,7 +29,7 @@ func (h *SocialMediaHandler) ListPost(w http.ResponseWriter, r *http.Request) {
 
 	var posts []models.Post
 
-	result := h.DBReader.Find(&posts)
+	result := h.DBReader.Preload("User").Find(&posts)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)
