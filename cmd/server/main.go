@@ -51,12 +51,13 @@ func (a *App) Initialize(ctx context.Context) error {
 		Addr:         redisAddress,
 		Password:     "",
 		DB:           0,
-		PoolSize:     100,
-		MinIdleConns: 5,
+		PoolSize:     500,
+		MinIdleConns: 50,
 		DialTimeout:  5 * time.Second,
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
-		PoolTimeout:  4 * time.Second,
+		PoolTimeout:  30 * time.Second,
+		IdleTimeout:  5 * time.Minute,
 	})
 
 	a.Router = mux.NewRouter()

@@ -32,8 +32,8 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get SQL DB from GORM: %v", err)
 	}
 
-	sqlDB.SetMaxOpenConns(200)
-	sqlDB.SetMaxIdleConns(50)
+	sqlDB.SetMaxOpenConns(300)
+	sqlDB.SetMaxIdleConns(100)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	err = sqlDB.Ping()
@@ -75,8 +75,8 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get SQL DB from GORM: %v", err)
 	}
 
-	sqlDB.SetMaxOpenConns(200)
-	sqlDB.SetMaxIdleConns(50)
+	sqlDB.SetMaxOpenConns(300)
+	sqlDB.SetMaxIdleConns(100)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	err = sqlDB.Ping()
