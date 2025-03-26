@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
@@ -34,6 +35,14 @@ func (h *SocialMediaHandler) DeleteComment(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Post not found", http.StatusNotFound)
 		return
 	}
+
+	commentsListKey := fmt.Sprintf("commentlist:%d", commentID)
+	res, err := h.RedisReader.Del(commentsListKey).Result()
+	if err != nil {
+		log.Printf("Failed to delete key: %v", err)
+		return
+	}
+	log.Printf("[INFO] Deleted %d keys", res)
 
 	log.Printf("[INFO] Successfully deleted post with ID: %d", commentID)
 	w.Header().Set("Content-Type", "application/json")

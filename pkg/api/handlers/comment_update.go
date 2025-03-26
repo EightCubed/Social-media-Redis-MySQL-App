@@ -11,36 +11,34 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type CommentUpdateBody struct {
+	Content string `json:"content"`
+}
+
 func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[INFO] UpdateUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
+	log.Printf("[INFO] UpdateComment handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["comment_id"])
+	commentID, err := strconv.Atoi(vars["comment_id"])
 	if err != nil {
-		log.Printf("[ERROR] Invalid user ID: %v", err)
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		log.Printf("[ERROR] Invalid comment ID: %v", err)
+		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
 		return
 	}
 
-	var updatedUser models.User
-	err = json.NewDecoder(r.Body).Decode(&updatedUser)
+	var updatedComment CommentUpdateBody
+	err = json.NewDecoder(r.Body).Decode(&updatedComment)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	updates := map[string]interface{}{}
-	if updatedUser.Username != "" {
-		updates["username"] = updatedUser.Username
-	}
-	if updatedUser.Email != "" {
-		updates["email"] = updatedUser.Email
-	}
-	if updatedUser.Password != "" {
-		updates["password"] = updatedUser.Password
+	if updatedComment.Content != "" {
+		updates["content"] = updatedComment.Content
 	}
 
-	result := h.DBWriter.Model(&models.User{}).Where("id = ?", id).Updates(updates)
+	result := h.DBWriter.Model(&models.User{}).Where("id = ?", commentID).Updates(updates)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)
@@ -49,28 +47,23 @@ func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Reques
 	}
 
 	if result.RowsAffected == 0 {
-		log.Printf("[WARN] No user found with ID: %d", id)
+		log.Printf("[WARN] No user found with ID: %d", commentID)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
-	var resultUser models.User
-	result = h.DBReader.First(&resultUser, id)
-
-	cacheKey := fmt.Sprintf("post:%d", resultUser.ID)
-	marshalledUser, err := json.Marshal(resultUser)
+	commentsListKey := fmt.Sprintf("commentlist:%d", commentID)
+	res, err := h.RedisReader.Del(commentsListKey).Result()
 	if err != nil {
-		log.Printf("[ERROR] Marshal error: %v", err)
+		log.Printf("Failed to delete key: %v", err)
+		return
 	}
-	err = h.RedisReader.Set(cacheKey, marshalledUser, CACHE_DURATION_LONG).Err()
-	if err != nil {
-		log.Printf("[ERROR] Cache set error: %v", err)
-	}
+	log.Printf("[INFO] Deleted %d keys", res)
 
-	log.Printf("[INFO] Successfully updated user with ID: %d", id)
+	log.Printf("[INFO] Successfully updated user with ID: %d", commentID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "User updated successfully",
-		"user_id": id,
+		"user_id": commentID,
 	})
 }
