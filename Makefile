@@ -11,6 +11,7 @@ build:
 	sleep 3
 
 	if [ ! -z "$(PREV_TAG)" ]; then \
+		docker image rm $(IMAGE_NAME):$(PREV_TAG) || true; \
 		minikube image rm $(IMAGE_NAME):$(PREV_TAG) || true; \
 	fi
 
