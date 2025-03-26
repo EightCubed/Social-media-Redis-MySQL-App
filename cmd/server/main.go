@@ -47,7 +47,7 @@ func (a *App) Initialize() error {
 		Addr:         redisAddress,
 		Password:     "",
 		DB:           0,
-		PoolSize:     50,
+		PoolSize:     1000,
 		MinIdleConns: 5,
 	})
 
@@ -88,12 +88,13 @@ func (a *App) initializeRoutes() {
 
 func (a *App) Run() {
 	srv := &http.Server{
-		Addr:           ":" + a.Config.ServerPort,
-		Handler:        a.Router,
-		ReadTimeout:    5 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		IdleTimeout:    120 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		Addr:              ":" + a.Config.ServerPort,
+		Handler:           a.Router,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+		ReadHeaderTimeout: 2 * time.Second,
 	}
 	log.Printf("Starting server on port %s...\n", a.Config.ServerPort)
 	err := srv.ListenAndServe()
