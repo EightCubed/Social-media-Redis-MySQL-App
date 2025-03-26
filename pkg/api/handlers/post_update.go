@@ -15,7 +15,7 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	log.Printf("[INFO] UpdatePost handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	postID, err := strconv.Atoi(vars["post_id"])
 	if err != nil {
 		log.Printf("[ERROR] Invalid post ID: %v", err)
 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -37,7 +37,7 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 		updates["content"] = updatedPost.Content
 	}
 
-	result := h.DBWriter.Model(&models.Post{}).Where("id = ?", id).Updates(updates)
+	result := h.DBWriter.Model(&models.Post{}).Where("id = ?", postID).Updates(updates)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)
@@ -46,13 +46,13 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if result.RowsAffected == 0 {
-		log.Printf("[WARN] No post found with ID: %d", id)
+		log.Printf("[WARN] No post found with ID: %d", postID)
 		http.Error(w, "Post not found", http.StatusNotFound)
 		return
 	}
 
 	var resultPost models.Post
-	result = h.DBReader.First(&resultPost, id)
+	result = h.DBReader.First(&resultPost, postID)
 
 	cacheKey := fmt.Sprintf("post:%d", resultPost.ID)
 	marshalledPost, err := json.Marshal(resultPost)
@@ -64,10 +64,10 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 		log.Printf("[ERROR] Cache set error: %v", err)
 	}
 
-	log.Printf("[INFO] Successfully updated post with ID: %d", id)
+	log.Printf("[INFO] Successfully updated post with ID: %d", postID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Post updated successfully",
-		"post_id": id,
+		"post_id": postID,
 	})
 }

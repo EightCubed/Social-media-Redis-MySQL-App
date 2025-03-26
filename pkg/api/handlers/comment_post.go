@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type CommentBody struct {
+type CommentPostBody struct {
 	UserID  int    `json:"user_id"`
 	Content string `json:"content"`
 }
@@ -27,7 +27,7 @@ func (h *SocialMediaHandler) PostComment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var commentBody CommentBody
+	var commentBody CommentPostBody
 	if err := json.NewDecoder(r.Body).Decode(&commentBody); err != nil {
 		log.Printf("[ERROR] Failed to decode request body: %v", err)
 		http.Error(w, "Invalid input", http.StatusBadRequest)

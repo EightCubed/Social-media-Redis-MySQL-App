@@ -24,14 +24,14 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] GetUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	userID, err := strconv.Atoi(vars["user_id"])
 	if err != nil {
 		log.Printf("[ERROR] Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
-	cacheKey := fmt.Sprintf("user:%d", id)
+	cacheKey := fmt.Sprintf("user:%d", userID)
 
 	res, redisErr := h.RedisReader.WithContext(ctx).Get(cacheKey).Result()
 	if redisErr == redis.Nil {
@@ -53,7 +53,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
-	result := h.DBReader.WithContext(ctx).First(&user, id)
+	result := h.DBReader.WithContext(ctx).First(&user, userID)
 
 	if result.Error != nil {
 		select {
@@ -63,7 +63,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 			return
 		default:
 			if result.Error == gorm.ErrRecordNotFound {
-				log.Printf("[WARNING] User not found - ID: %d", id)
+				log.Printf("[WARNING] User not found - ID: %d", userID)
 				http.Error(w, "User not found", http.StatusNotFound)
 				return
 			}

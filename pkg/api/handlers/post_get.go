@@ -17,7 +17,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] GetPost handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	postID, err := strconv.Atoi(vars["post_id"])
 	if err != nil {
 		log.Printf("[ERROR] Invalid Post ID: %v", err)
 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -26,16 +26,16 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 
 	var getPostReply v1alpha1.PostReturnType
 
-	postKey := fmt.Sprintf("post:%d", id)
-	viewsKey := fmt.Sprintf("post:%d:views", id)
-	likesKey := fmt.Sprintf("post:%d:likes", id)
+	postKey := fmt.Sprintf("post:%d", postID)
+	viewsKey := fmt.Sprintf("post:%d:views", postID)
+	likesKey := fmt.Sprintf("post:%d:likes", postID)
 
-	log.Printf("[INFO] Attempting to retrieve post - ID: %d, PostKey: %s, ViewsKey: %s", id, postKey, viewsKey)
+	log.Printf("[INFO] Attempting to retrieve post - ID: %d, PostKey: %s, ViewsKey: %s", postID, postKey, viewsKey)
 
 	// Attempt to retrieve from cache first
-	post, err := h.getPostFromCache(postKey, id)
+	post, err := h.getPostFromCache(postKey, postID)
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve post - ID: %d, Error: %v", id, err)
+		log.Printf("[ERROR] Failed to retrieve post - ID: %d, Error: %v", postID, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -44,11 +44,11 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] Failed to increment views - ViewsKey: %s, Error: %v", viewsKey, err)
 	} else {
-		log.Printf("[INFO] Views incremented - PostID: %d, NewViewCount: %d", id, views)
+		log.Printf("[INFO] Views incremented - PostID: %d, NewViewCount: %d", postID, views)
 		post.Views = views
 	}
 
-	likes, err := h.getLikesFromCache(likesKey, id)
+	likes, err := h.getLikesFromCache(likesKey, postID)
 
 	getPostReply.Post = *post
 	getPostReply.NumberOfLikes = likes
@@ -58,7 +58,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Keep-Alive", "timeout=5, max=1000")
 
 	if err := json.NewEncoder(w).Encode(getPostReply); err != nil {
-		log.Printf("[ERROR] Failed to encode post - PostID: %d, Error: %v", id, err)
+		log.Printf("[ERROR] Failed to encode post - PostID: %d, Error: %v", postID, err)
 	} else {
 		log.Printf("[INFO] Successfully sent post response - PostID: %d, Title: %s", post.ID, post.Title)
 	}

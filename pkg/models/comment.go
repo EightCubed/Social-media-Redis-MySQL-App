@@ -6,8 +6,8 @@ import (
 
 type Comment struct {
 	gorm.Model
-	PostID  uint   `gorm:"not null;index;uniqueIndex:idx_post_user,priority:1"`
-	UserID  uint   `gorm:"not null;index;uniqueIndex:idx_post_user,priority:2"`
+	PostID  uint   `gorm:"not null;index"`
+	UserID  uint   `gorm:"not null;index"`
 	Content string `gorm:"type:text;not null"`
 
 	Post Post `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE"`

@@ -14,7 +14,7 @@ import (
 func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] LikePost handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 	vars := mux.Vars(r)
-	postID, err := strconv.Atoi(vars["id"])
+	postID, err := strconv.Atoi(vars["post_id"])
 	if err != nil {
 		http.Error(w, "Invalid post ID", http.StatusBadRequest)
 		return
