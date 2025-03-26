@@ -49,6 +49,10 @@ func (a *App) Initialize() error {
 		DB:           0,
 		PoolSize:     100,
 		MinIdleConns: 5,
+		DialTimeout:  5 * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+		PoolTimeout:  4 * time.Second,
 	})
 
 	a.Router = mux.NewRouter()

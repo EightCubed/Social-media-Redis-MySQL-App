@@ -70,7 +70,7 @@ func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.P
 	// Cache miss, log and fetch from database
 	log.Printf("[INFO] Cache miss for post - Key: %s, Fetching from database", postKey)
 	var post models.Post
-	result := h.DBReader.First(&post, id)
+	result := h.DBReader.Preload("User").First(&post, id)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			log.Printf("[WARN] Post not found in database - ID: %d", id)
