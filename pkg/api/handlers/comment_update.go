@@ -38,7 +38,7 @@ func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Reques
 		updates["content"] = updatedComment.Content
 	}
 
-	result := h.DBWriter.Model(&models.User{}).Where("id = ?", commentID).Updates(updates)
+	result := h.DBWriter.Model(&models.Comment{}).Omit("Post", "User").Where("id = ?", commentID).Updates(updates)
 
 	if result.Error != nil {
 		log.Printf("[ERROR] Database query error: %v", result.Error)

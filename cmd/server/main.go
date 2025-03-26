@@ -110,7 +110,7 @@ func (a *App) initializeRoutes() {
 	// Comment endpoints
 	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.ListComments).Methods("GET")
 	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.PostComment).Methods("POST")
-	apiRouter.HandleFunc("/comments/{comment_id:[0-9]+}", socialMediaHandler.UpdateComment).Methods("DELETE")
+	apiRouter.HandleFunc("/comments/{comment_id:[0-9]+}", socialMediaHandler.UpdateComment).Methods("PATCH")
 	apiRouter.HandleFunc("/comments/{comment_id:[0-9]+}", socialMediaHandler.DeleteComment).Methods("DELETE")
 
 	// Metrics endpoint
