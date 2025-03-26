@@ -36,8 +36,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Increment views atomically
-	views, err := h.incrementPostViews(viewsKey)
+	views, err := h.incrementPostViews(viewsKey, post.Views)
 	if err != nil {
 		log.Printf("[ERROR] Failed to increment views - ViewsKey: %s, Error: %v", viewsKey, err)
 	} else {
@@ -57,7 +56,6 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.Post, error) {
-	// Try cache first
 	postResult, redisPostErr := h.RedisReader.Get(postKey).Result()
 	if redisPostErr == nil {
 		log.Printf("[INFO] Cache hit for post - Key: %s", postKey)
@@ -97,19 +95,26 @@ func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.P
 	return &post, nil
 }
 
-func (h *SocialMediaHandler) incrementPostViews(viewsKey string) (int, error) {
+func (h *SocialMediaHandler) incrementPostViews(viewsKey string, dbPostViews int) (int, error) {
 	// Atomically increment views
 	viewsCount, err := h.RedisReader.Incr(viewsKey).Result()
 	if err != nil {
 		log.Printf("[ERROR] Failed to increment views - Key: %s, Error: %v", viewsKey, err)
-		return 0, err
+		return dbPostViews, err
 	}
 
-	log.Printf("[INFO] Views incremented - Key: %s, NewCount: %d", viewsKey, viewsCount)
+	finalViewCount := max(int(viewsCount), dbPostViews+1)
 
-	if err := h.RedisReader.Expire(viewsKey, CACHE_DURATION_VERY_LONG).Err(); err != nil {
-		log.Printf("[WARN] Failed to set views key expiration - Key: %s, Error: %v", viewsKey, err)
+	if err := h.RedisReader.Set(viewsKey, finalViewCount, CACHE_DURATION_VERY_LONG).Err(); err != nil {
+		log.Printf("[WARN] Failed to update views key - Key: %s, Error: %v", viewsKey, err)
 	}
 
-	return int(viewsCount), nil
+	return finalViewCount, nil
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
