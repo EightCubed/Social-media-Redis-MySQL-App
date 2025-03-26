@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-social-media/pkg/models"
+	v1alpha1 "go-social-media/pkg/types"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,8 +24,11 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var getPostReply v1alpha1.PostReturnType
+
 	postKey := fmt.Sprintf("post:%d", id)
 	viewsKey := fmt.Sprintf("post:%d:views", id)
+	likesKey := fmt.Sprintf("post:%d:likes", id)
 
 	log.Printf("[INFO] Attempting to retrieve post - ID: %d, PostKey: %s, ViewsKey: %s", id, postKey, viewsKey)
 
@@ -44,11 +48,16 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		post.Views = views
 	}
 
+	likes, err := h.getLikesFromCache(likesKey, id)
+
+	getPostReply.Post = *post
+	getPostReply.NumberOfLikes = likes
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Keep-Alive", "timeout=5, max=1000")
 
-	if err := json.NewEncoder(w).Encode(post); err != nil {
+	if err := json.NewEncoder(w).Encode(getPostReply); err != nil {
 		log.Printf("[ERROR] Failed to encode post - PostID: %d, Error: %v", id, err)
 	} else {
 		log.Printf("[INFO] Successfully sent post response - PostID: %d, Title: %s", post.ID, post.Title)
@@ -93,6 +102,38 @@ func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.P
 	}
 
 	return &post, nil
+}
+
+func (h *SocialMediaHandler) getLikesFromCache(likesKey string, id int) (int64, error) {
+	var likesCount int64
+	likesCountString, redisLikesErr := h.RedisReader.Get(likesKey).Result()
+	if redisLikesErr == nil {
+		log.Printf("[INFO] Cache hit for post - Key: %s", likesKey)
+		if err := json.Unmarshal([]byte(likesCountString), &likesCount); err != nil {
+			log.Printf("[ERROR] Failed to unmarshal cached post - Key: %s, Error: %v", likesKey, err)
+			return 0, fmt.Errorf("failed to unmarshal cached post: %w", err)
+		}
+		return likesCount, nil
+	}
+
+	// Cache miss, log and fetch from database
+	log.Printf("[INFO] Cache miss for likes - Key: %s, Fetching from database", likesKey)
+	result := h.DBReader.Model(&models.Like{}).Where("post_id = ?", id).Count(&likesCount)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			log.Printf("[WARN] Post not found in database - ID: %d", id)
+			return 0, fmt.Errorf("post not found")
+		}
+		log.Printf("[ERROR] Database query failed - ID: %d, Error: %v", id, result.Error)
+		return 0, result.Error
+	}
+
+	// Attempt to cache the fetched post
+	if err := h.RedisReader.Set(likesKey, likesCount, CACHE_DURATION_VERY_LONG).Err(); err != nil {
+		log.Printf("[WARN] Failed to update views key - Key: %s, Error: %v", likesKey, err)
+	}
+
+	return likesCount, nil
 }
 
 func (h *SocialMediaHandler) incrementPostViews(viewsKey string, dbPostViews int) (int, error) {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
@@ -35,7 +36,15 @@ func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	likesKey := fmt.Sprintf("post:%d:likes", postID)
+
+	// Attempt to cache the updated likes
+	_, err = h.RedisReader.Incr(likesKey).Result()
+	if err != nil {
+		log.Printf("[ERROR] Failed to increment views - Key: %s, Error: %v", likesKey, err)
+	}
+
 	log.Printf("[INFO] Like added successfully - PostID: %d, UserID: %s", like.ID, like.UserID)
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Post created successfully"})
+	json.NewEncoder(w).Encode(map[string]string{"message": "Like added successfully"})
 }
