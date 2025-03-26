@@ -90,22 +90,28 @@ func (a *App) initializeRoutes() {
 	apiRouter.HandleFunc("/health", socialMediaHandler.HealthCheck).Methods("GET")
 
 	// User endpoints
-	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.GetUser).Methods("GET")
-	apiRouter.HandleFunc("/user", socialMediaHandler.PostUser).Methods("POST")
 	apiRouter.HandleFunc("/user", socialMediaHandler.ListUser).Methods("GET")
+	apiRouter.HandleFunc("/user", socialMediaHandler.PostUser).Methods("POST")
+	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.GetUser).Methods("GET")
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.UpdateUser).Methods("PATCH")
 	apiRouter.HandleFunc("/user/{id:[0-9]+}", socialMediaHandler.DeleteUser).Methods("DELETE")
 
 	// Post endpoints
-	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.GetPost).Methods("GET")
-	apiRouter.HandleFunc("/post", socialMediaHandler.PostPost).Methods("POST")
 	apiRouter.HandleFunc("/post", socialMediaHandler.ListPost).Methods("GET")
+	apiRouter.HandleFunc("/post", socialMediaHandler.PostPost).Methods("POST")
+	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.GetPost).Methods("GET")
 	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.UpdatePost).Methods("PATCH")
 	apiRouter.HandleFunc("/post/{id:[0-9]+}", socialMediaHandler.DeletePost).Methods("DELETE")
 
 	// Like endpoints
 	apiRouter.HandleFunc("/post/{id:[0-9]+}/likes", socialMediaHandler.LikePost).Methods("POST")
 	apiRouter.HandleFunc("/post/{id:[0-9]+}/likes", socialMediaHandler.LikeDelete).Methods("DELETE")
+
+	// Comment endpoints
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.ListComments).Methods("GET")
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.PostComment).Methods("POST")
+	// apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments/{comment_id:[0-9]+}", socialMediaHandler.GetPost).Methods("PATCH")
+	// apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments/{comment_id:[0-9]+}", socialMediaHandler.GetPost).Methods("DELETE")
 
 	// Metrics endpoint
 	// a.Router.Handle("/metrics", promhttp.Handler())
