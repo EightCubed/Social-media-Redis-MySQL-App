@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
@@ -24,105 +23,93 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post models.Post
-
 	postKey := fmt.Sprintf("post:%d", id)
 	viewsKey := fmt.Sprintf("post:%d:views", id)
 
-	postResult, redisPostErr := h.RedisReader.Get(postKey).Result()
-	if redisPostErr == redis.Nil || redisPostErr != nil {
-		if redisPostErr == redis.Nil {
-			log.Printf("[INFO] Cache post miss")
-		} else {
-			log.Printf("[ERROR] Failed to get post cache: %v", redisPostErr)
-		}
+	log.Printf("[INFO] Attempting to retrieve post - ID: %d, PostKey: %s, ViewsKey: %s", id, postKey, viewsKey)
 
-		var result *gorm.DB
-		result = h.DBReader.First(&post, id)
-
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				log.Printf("[WARNING] Post not found - ID: %d", id)
-				http.Error(w, "Post not found", http.StatusNotFound)
-				return
-			}
-			log.Printf("[ERROR] Database query error: %v", result.Error)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		var viewCounter int
-		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
-		if redisViewErr == redis.Nil {
-			log.Printf("[INFO] Cache views miss")
-		} else if redisViewErr != nil {
-			log.Printf("[ERROR] Failed to get views cache: %v", redisViewErr)
-		} else {
-			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
-				log.Printf("[ERROR] Failed to unmarshal cached views: %v", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
-			} else {
-				post.Views = viewCounter
-			}
-		}
-
-		// Incrementing post views
-		post.Views += 1
-
-		// Caching post
-		marshalledPost, err := json.Marshal(post)
-		if err != nil {
-			log.Printf("[ERROR] Marshal post error: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		err = h.RedisReader.Set(postKey, marshalledPost, CACHE_DURATION_VERY_LONG).Err()
-		if err != nil {
-			log.Printf("[ERROR] Cache post set error: %v", err)
-		}
-
-		// Caching updated views
-		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_VERY_LONG).Err()
-		if err != nil {
-			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
-		}
-	} else {
-		log.Printf("[INFO] Cache post hit")
-		if err := json.Unmarshal([]byte(postResult), &post); err != nil {
-			log.Printf("[ERROR] Failed to unmarshal cached post: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		var viewCounter int
-		viewsResult, redisViewErr := h.RedisReader.Get(viewsKey).Result()
-		if redisViewErr == redis.Nil {
-			log.Printf("[INFO] Cache views miss")
-		} else if redisViewErr != nil {
-			log.Printf("[ERROR] Failed to get cache views: %v", redisViewErr)
-		} else {
-			if err := json.Unmarshal([]byte(viewsResult), &viewCounter); err != nil {
-				log.Printf("[ERROR] Failed to unmarshal cached views: %v", err)
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
-			} else {
-				post.Views = viewCounter
-			}
-		}
-
-		// Incrementing post views
-		post.Views += 1
-
-		// Caching updated views
-		err = h.RedisReader.Set(viewsKey, strconv.Itoa(post.Views), CACHE_DURATION_VERY_LONG).Err()
-		if err != nil {
-			log.Printf("[ERROR] Failed to set views in Redis: %v", err)
-		}
+	// Attempt to retrieve from cache first
+	post, err := h.getPostFromCache(postKey, id)
+	if err != nil {
+		log.Printf("[ERROR] Failed to retrieve post - ID: %d, Error: %v", id, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
 
-	log.Printf("[INFO] Successfully retrieved Post - ID: %d, Title: %s, Views: %d", post.ID, post.Title, post.Views)
+	// Increment views atomically
+	views, err := h.incrementPostViews(viewsKey)
+	if err != nil {
+		log.Printf("[ERROR] Failed to increment views - ViewsKey: %s, Error: %v", viewsKey, err)
+	} else {
+		log.Printf("[INFO] Views incremented - PostID: %d, NewViewCount: %d", id, views)
+		post.Views = views
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Keep-Alive", "timeout=5, max=1000")
-	json.NewEncoder(w).Encode(post)
+
+	if err := json.NewEncoder(w).Encode(post); err != nil {
+		log.Printf("[ERROR] Failed to encode post - PostID: %d, Error: %v", id, err)
+	} else {
+		log.Printf("[INFO] Successfully sent post response - PostID: %d, Title: %s", post.ID, post.Title)
+	}
+}
+
+func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.Post, error) {
+	// Try cache first
+	postResult, redisPostErr := h.RedisReader.Get(postKey).Result()
+	if redisPostErr == nil {
+		log.Printf("[INFO] Cache hit for post - Key: %s", postKey)
+		var post models.Post
+		if err := json.Unmarshal([]byte(postResult), &post); err != nil {
+			log.Printf("[ERROR] Failed to unmarshal cached post - Key: %s, Error: %v", postKey, err)
+			return nil, fmt.Errorf("failed to unmarshal cached post: %w", err)
+		}
+		return &post, nil
+	}
+
+	// Cache miss, log and fetch from database
+	log.Printf("[INFO] Cache miss for post - Key: %s, Fetching from database", postKey)
+	var post models.Post
+	result := h.DBReader.First(&post, id)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			log.Printf("[WARN] Post not found in database - ID: %d", id)
+			return nil, fmt.Errorf("post not found")
+		}
+		log.Printf("[ERROR] Database query failed - ID: %d, Error: %v", id, result.Error)
+		return nil, result.Error
+	}
+
+	// Attempt to cache the fetched post
+	marshalledPost, err := json.Marshal(post)
+	if err != nil {
+		log.Printf("[WARN] Failed to marshal post for caching - PostID: %d, Error: %v", id, err)
+	} else {
+		if err := h.RedisReader.Set(postKey, marshalledPost, CACHE_DURATION_VERY_LONG).Err(); err != nil {
+			log.Printf("[WARN] Failed to cache post - Key: %s, Error: %v", postKey, err)
+		} else {
+			log.Printf("[INFO] Post successfully cached - Key: %s, PostID: %d", postKey, id)
+		}
+	}
+
+	return &post, nil
+}
+
+func (h *SocialMediaHandler) incrementPostViews(viewsKey string) (int, error) {
+	// Atomically increment views
+	viewsCount, err := h.RedisReader.Incr(viewsKey).Result()
+	if err != nil {
+		log.Printf("[ERROR] Failed to increment views - Key: %s, Error: %v", viewsKey, err)
+		return 0, err
+	}
+
+	log.Printf("[INFO] Views incremented - Key: %s, NewCount: %d", viewsKey, viewsCount)
+
+	if err := h.RedisReader.Expire(viewsKey, CACHE_DURATION_VERY_LONG).Err(); err != nil {
+		log.Printf("[WARN] Failed to set views key expiration - Key: %s, Error: %v", viewsKey, err)
+	}
+
+	return int(viewsCount), nil
 }
