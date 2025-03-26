@@ -25,8 +25,6 @@ EXPOSE 8080
 
 ENV DB_HOST="mysql" \
     DB_PORT="3306" \
-    DB_USER="root" \
-    DB_PASSWORD="rootpassword" \
     DB_NAME="social_media_app" \
     REDIS_HOST="redis" \
     REDIS_PORT="6379"

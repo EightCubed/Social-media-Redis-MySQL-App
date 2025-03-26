@@ -47,7 +47,7 @@ func (a *App) Initialize() error {
 		Addr:         redisAddress,
 		Password:     "",
 		DB:           0,
-		PoolSize:     1000,
+		PoolSize:     100,
 		MinIdleConns: 5,
 	})
 

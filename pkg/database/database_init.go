@@ -32,9 +32,9 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get SQL DB from GORM: %v", err)
 	}
 
-	sqlDB.SetMaxIdleConns(20)
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetMaxOpenConns(200)
+	sqlDB.SetMaxIdleConns(50)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	err = sqlDB.Ping()
 	if err != nil {

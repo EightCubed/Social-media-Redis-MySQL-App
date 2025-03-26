@@ -53,18 +53,7 @@ func SyncViewsToDB(db *database.DBConnection, redisClient *redis.Client, interva
 				if result.Error != nil {
 					log.Printf("[ERROR] Failed to update views in DB: %v", result.Error)
 				} else {
-					var post models.Post
-					var result *gorm.DB
-					result = db.GormDBWriter.First(&post, postID)
-
-					if result.Error != nil {
-						if result.Error == gorm.ErrRecordNotFound {
-							log.Printf("[WARNING] Post not found - ID: %d", key)
-						}
-						log.Printf("[ERROR] Database query error: %v", result.Error)
-					}
 					log.Printf("[INFO] Flushed %d views to MySQL for post %d", views, postID)
-					log.Printf("[INFO] Updated post", post)
 				}
 			}
 		}
