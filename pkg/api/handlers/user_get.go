@@ -63,5 +63,7 @@ func (h *SocialMediaHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] Successfully retrieved user - ID: %d, Username: %s", user.ID, user.Username)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Keep-Alive", "timeout=5, max=1000")
 	json.NewEncoder(w).Encode(user)
 }

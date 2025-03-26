@@ -122,5 +122,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[INFO] Successfully retrieved Post - ID: %d, Title: %s, Views: %d", post.ID, post.Title, post.Views)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Keep-Alive", "timeout=5, max=1000")
 	json.NewEncoder(w).Encode(post)
 }

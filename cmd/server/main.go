@@ -7,6 +7,7 @@ import (
 	database "go-social-media/pkg/database"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -43,9 +44,11 @@ func (a *App) Initialize() error {
 	redisAddress := fmt.Sprintf("%s:%s", a.Config.RedisHost, a.Config.RedisPort)
 
 	a.RedisClient = redis.NewClient(&redis.Options{
-		Addr:     redisAddress,
-		Password: "",
-		DB:       0,
+		Addr:         redisAddress,
+		Password:     "",
+		DB:           0,
+		PoolSize:     50,
+		MinIdleConns: 5,
 	})
 
 	a.Router = mux.NewRouter()
@@ -84,8 +87,16 @@ func (a *App) initializeRoutes() {
 }
 
 func (a *App) Run() {
+	srv := &http.Server{
+		Addr:           ":" + a.Config.ServerPort,
+		Handler:        a.Router,
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		IdleTimeout:    120 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
 	log.Printf("Starting server on port %s...\n", a.Config.ServerPort)
-	err := http.ListenAndServe(":"+a.Config.ServerPort, a.Router)
+	err := srv.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
@@ -117,6 +128,10 @@ func main() {
 	defer database.DBClose(app.DB)
 
 	app.startViewSync(handlers.CACHE_DURATION_LONG)
+
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:6060", nil)) // Expose pprof endpoint
+	}()
 
 	app.Run()
 }

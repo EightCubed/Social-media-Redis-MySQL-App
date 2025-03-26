@@ -5,6 +5,7 @@ import (
 	"go-social-media/pkg/config"
 	"go-social-media/pkg/models"
 	"log"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -30,6 +31,10 @@ func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
 		log.Printf("Failed to get SQL DB from GORM: %v", err)
 		return nil, fmt.Errorf("failed to get SQL DB from GORM: %v", err)
 	}
+
+	sqlDB.SetMaxIdleConns(20)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	err = sqlDB.Ping()
 	if err != nil {
@@ -69,6 +74,10 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 		log.Printf("Failed to get SQL DB from GORM: %v", err)
 		return nil, fmt.Errorf("failed to get SQL DB from GORM: %v", err)
 	}
+
+	sqlDB.SetMaxIdleConns(20)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	err = sqlDB.Ping()
 	if err != nil {
