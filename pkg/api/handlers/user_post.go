@@ -27,48 +27,59 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &models.User{
-		Username: body.Username,
-		Email:    body.Email,
-	}
-	log.Printf("[INFO] Creating new user - Username: %s, Email: %s", user.Username, user.Email)
-	if err := h.DBWriter.Create(&user).Error; err != nil {
-		log.Printf("[ERROR] Database insertion failed: %v", err)
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("[ERROR] Password hashing failed: %v", err)
+		http.Error(w, "Failed to process password", http.StatusInternalServerError)
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	login := &models.Login{
+		PasswordHash: string(hashedPassword),
+	}
+	log.Printf("[INFO] Creating new login")
+	if err := h.DBWriter.Create(login).Error; err != nil {
+		log.Printf("[ERROR] Login creation failed: %v", err)
+		http.Error(w, "Failed to create login", http.StatusInternalServerError)
+		return
+	}
+
+	// Create user with login ID
+	user := &models.User{
+		Username: body.Username,
+		Email:    body.Email,
+		LoginID:  login.ID,
+	}
+	log.Printf("[INFO] Creating new user - Username: %s, Email: %s", user.Username, user.Email)
+	if err := h.DBWriter.Create(user).Error; err != nil {
+		log.Printf("[ERROR] User creation failed: %v", err)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		return
+	}
 
 	accessToken, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
 		log.Printf("[ERROR] Access token generation failed: %v", err)
 	}
-	refreshToken, err := utils.GenerateAccessToken(user.ID)
+	refreshToken, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		log.Printf("[ERROR] Refresh token generation failed: %v", err)
 	}
 
-	login := &models.Login{
-		PasswordHash: string(hashedPassword),
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
-	log.Printf("[INFO] Creating new login")
-	if err := h.DBWriter.Create(&login).Error; err != nil {
-		log.Printf("[ERROR] Database insertion failed: %v", err)
-		http.Error(w, "Failed to create login", http.StatusInternalServerError)
-		return
+	login.AccessToken = accessToken
+	login.RefreshToken = refreshToken
+	if err := h.DBWriter.Save(login).Error; err != nil {
+		log.Printf("[ERROR] Failed to update login with tokens: %v", err)
 	}
 
 	cacheKey := fmt.Sprintf("user:%d", user.ID)
 	marshalledUser, err := json.Marshal(user)
 	if err != nil {
-		log.Printf("[ERROR] Marshal error: %v", err)
-	}
-	err = h.RedisReader.Set(cacheKey, marshalledUser, CACHE_DURATION_LONG).Err()
-	if err != nil {
-		log.Printf("[ERROR] Cache set error: %v", err)
+		log.Printf("[WARN] Marshal error: %v", err)
+	} else {
+		if err := h.RedisReader.Set(cacheKey, marshalledUser, CACHE_DURATION_LONG).Err(); err != nil {
+			log.Printf("[WARN] Cache set error: %v", err)
+		}
 	}
 
 	log.Printf("[INFO] User created successfully - ID: %d, Username: %s", user.ID, user.Username)

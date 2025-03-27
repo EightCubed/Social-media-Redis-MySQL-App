@@ -90,16 +90,23 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 }
 
 func AutoMigrateTables(db *gorm.DB) error {
-	err := db.AutoMigrate(
-		&models.User{},
+	log.Println("Migrating User table first...")
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		return fmt.Errorf("failed to migrate User table: %v", err)
+	}
+
+	log.Println("Migrating Login table...")
+	if err := db.AutoMigrate(&models.Login{}); err != nil {
+		return fmt.Errorf("failed to migrate Login table: %v", err)
+	}
+
+	log.Println("Migrating remaining tables...")
+	if err := db.AutoMigrate(
 		&models.Post{},
 		&models.Comment{},
 		&models.Like{},
-		&models.Login{},
-	)
-
-	if err != nil {
-		return fmt.Errorf("failed to auto-migrate tables: %v", err)
+	); err != nil {
+		return fmt.Errorf("failed to migrate remaining tables: %v", err)
 	}
 
 	log.Printf("✅ Tables migrated successfully!")
