@@ -95,6 +95,7 @@ func AutoMigrateTables(db *gorm.DB) error {
 		&models.Post{},
 		&models.Comment{},
 		&models.Like{},
+		&models.Login{},
 	)
 
 	if err != nil {

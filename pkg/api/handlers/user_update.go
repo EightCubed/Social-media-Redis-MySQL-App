@@ -36,9 +36,6 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	if updatedUser.Email != "" {
 		updates["email"] = updatedUser.Email
 	}
-	if updatedUser.Password != "" {
-		updates["password"] = updatedUser.Password
-	}
 
 	result := h.DBWriter.Model(&models.User{}).Where("id = ?", userID).Updates(updates)
 
