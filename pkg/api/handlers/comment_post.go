@@ -55,7 +55,7 @@ func (h *SocialMediaHandler) PostComment(w http.ResponseWriter, r *http.Request)
 	}
 	log.Printf("[INFO] Deleted %d keys", result)
 
-	log.Printf("[INFO] Comment added successfully - PostID: %d, UserID: %s", comment.PostID, comment.UserID)
+	log.Printf("[INFO] Comment added successfully - PostID: %d, UserID: %d", comment.PostID, comment.UserID)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Comment added successfully"})
 }

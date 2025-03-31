@@ -32,7 +32,7 @@ func (h *SocialMediaHandler) PostPost(w http.ResponseWriter, r *http.Request) {
 		Views:   0,
 	}
 
-	log.Printf("[INFO] Creating new post - Title: %s, PostID: %s", post.Title, post.UserID)
+	log.Printf("[INFO] Creating new post - Title: %s, PostID: %d", post.Title, post.UserID)
 	if err := h.DBWriter.Create(&post).Error; err != nil {
 		log.Printf("[ERROR] Database insertion failed: %v", err)
 		http.Error(w, "Failed to create post", http.StatusInternalServerError)
