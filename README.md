@@ -1,3 +1,4 @@
+```
 redis-caching/
 ├── cmd/
 │   └── server/
@@ -72,3 +73,4 @@ redis-caching/
 │   └── unit/                    # Unit tests
 ├── go.mod                       # Go module definition
 └── README.md                    # Project documentation
+```
