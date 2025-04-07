@@ -28,7 +28,7 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if body.Username == "" || body.Email == "" || body.Password == "" {
-		log.Printf("[ERROR] Missing required fields: Username: %v, Email: %v, Password: %v", body.Username, body.Email, body.Password)
+		log.Printf("[ERROR] Missing required fields")
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
