@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"go-social-media/pkg/models"
 	"log"
 	"net/http"
@@ -19,7 +18,6 @@ func (h *SocialMediaHandler) ListUser(w http.ResponseWriter, r *http.Request) {
 	} else if redisErr != nil {
 		log.Printf("[ERROR] Failed to get cache: %v", redisErr)
 	} else {
-		fmt.Printf("[INFO] Cache hit:")
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("Keep-Alive", "timeout=5, max=1000")

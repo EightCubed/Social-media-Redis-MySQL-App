@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/gorilla/mux"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -25,16 +26,17 @@ var _ = Describe("UserPost", func() {
 	var (
 		testBody               map[string]interface{}
 		fakeSocialMediaHandler *handlers.SocialMediaHandler
+		router                 *mux.Router
 		w                      *httptest.ResponseRecorder
 		r                      *http.Request
 		jsonBytes              []byte
 		err                    error
 	)
 
-	fakeSocialMediaHandler = createFakeSocialMediaHandler()
+	fakeSocialMediaHandler, router = createFakeSocialMediaHandlerAndRouter()
 
 	// Happy path
-	Context("when body is valid", func() {
+	Context("when request body is valid", func() {
 		BeforeEach(func() {
 			testBody = map[string]interface{}{
 				"username": "testuser",
@@ -46,12 +48,12 @@ var _ = Describe("UserPost", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			w = httptest.NewRecorder()
-			r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+			r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 			r.Header.Set("Content-Type", "application/json")
 		})
 
 		It("should handle valid JSON body and return success", func() {
-			fakeSocialMediaHandler.PostUser(w, r)
+			router.ServeHTTP(w, r)
 			Expect(w.Code).To(Equal(http.StatusCreated))
 			var responseBody map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &responseBody)
@@ -70,8 +72,8 @@ var _ = Describe("UserPost", func() {
 		})
 	})
 
-	Context("when body is not correct", func() {
-		Context("body is nil", func() {
+	Context("when request body is not correct", func() {
+		Context("request body is nil", func() {
 			BeforeEach(func() {
 				testBody = map[string]interface{}{}
 
@@ -79,12 +81,12 @@ var _ = Describe("UserPost", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
 			})
 
 			It("should handle valid JSON body and return success", func() {
-				fakeSocialMediaHandler.PostUser(w, r)
+				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
@@ -100,12 +102,12 @@ var _ = Describe("UserPost", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
 			})
 
 			It("should handle valid JSON body and return success", func() {
-				fakeSocialMediaHandler.PostUser(w, r)
+				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
@@ -121,12 +123,12 @@ var _ = Describe("UserPost", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
 			})
 
 			It("should handle valid JSON body and return success", func() {
-				fakeSocialMediaHandler.PostUser(w, r)
+				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
@@ -142,12 +144,12 @@ var _ = Describe("UserPost", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
 			})
 
 			It("should handle valid JSON body and return success", func() {
-				fakeSocialMediaHandler.PostUser(w, r)
+				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
@@ -164,12 +166,12 @@ var _ = Describe("UserPost", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/user", bytes.NewBuffer(jsonBytes))
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
 			})
 
 			It("should handle valid JSON body and return success", func() {
-				fakeSocialMediaHandler.PostUser(w, r)
+				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})

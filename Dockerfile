@@ -11,7 +11,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o social-media-app ./cmd/server/main.go
 
 # Stage 2: Run
-FROM alpine:latest
+FROM alpine:latest AS runner
 
 WORKDIR /root/
 
