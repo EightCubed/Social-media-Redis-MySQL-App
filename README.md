@@ -1,3 +1,5 @@
+Proposed project structure
+
 ```
 redis-caching/
 ├── cmd/
