@@ -2,7 +2,7 @@ module go-social-media
 
 go 1.23.0
 
-toolchain go1.23.7
+// toolchain go1.23.7
 
 require (
 	github.com/alicebob/miniredis/v2 v2.34.0

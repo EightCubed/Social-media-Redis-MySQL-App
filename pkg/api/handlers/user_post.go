@@ -27,6 +27,12 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if body.Username == "" || body.Email == "" || body.Password == "" {
+		log.Printf("[ERROR] Missing required fields: Username: %v, Email: %v, Password: %v", body.Username, body.Email, body.Password)
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("[ERROR] Password hashing failed: %v", err)
