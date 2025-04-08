@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -27,90 +28,119 @@ var _ = Describe("UserUpdate", func() {
 	fakeSocialMediaHandler, router = createFakeSocialMediaHandlerAndRouter()
 
 	Context("when update function is called", func() {
-		JustBeforeEach(func() {
-			testBody = map[string]interface{}{
-				"username": "testuser",
-				"email":    "test@example.com",
-				"password": "testpassword",
-			}
+		testBody = map[string]interface{}{
+			"username": "testuser",
+			"email":    "test@example.com",
+			"password": "testpassword",
+		}
+		jsonBytes, err = json.Marshal(testBody)
+		Expect(err).ToNot(HaveOccurred())
 
-			jsonBytes, err = json.Marshal(testBody)
-			Expect(err).ToNot(HaveOccurred())
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
+		r.Header.Set("Content-Type", "application/json")
 
-			w = httptest.NewRecorder()
-			r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
-			r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+		Expect(w.Code).To(Equal(http.StatusCreated))
 
-			// Happy path
-			Context("when request body is correct", func() {
-				BeforeEach(func() {
-					testBody = map[string]interface{}{
-						"username": "testuser_updated",
-						"email":    "test_updated@example.com",
-						"password": "testpassword_updated",
-					}
+		Context("when request body is valid", func() {
+			BeforeEach(func() {
+				testBody = map[string]interface{}{
+					"username": "testuser_updated",
+				}
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
 
-					jsonBytes, err = json.Marshal(testBody)
-					Expect(err).ToNot(HaveOccurred())
-
-					w = httptest.NewRecorder()
-					r = httptest.NewRequest("PATCH", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
-					r.Header.Set("Content-Type", "application/json")
-				})
-
-				It("should handle valid JSON body and return success", func() {
-					router.ServeHTTP(w, r)
-					Expect(w.Code).To(Equal(http.StatusOK))
-					var responseBody map[string]interface{}
-					err := json.Unmarshal(w.Body.Bytes(), &responseBody)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(responseBody["Username"]).To(Equal("testuser"))
-					redisResult, err := fakeSocialMediaHandler.RedisReader.Get("user:1").Result()
-					var userObj userReturn
-					Expect(err).ToNot(HaveOccurred())
-					err = json.Unmarshal([]byte(redisResult), &userObj)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(redisResult).ToNot(BeNil())
-					Expect(userObj.Username).To(Equal("testuser_updated"))
-					Expect(userObj.Email).To(Equal("test_updated@example.com"))
-					Expect(userObj.ID).To(Equal(1))
-					Expect(userObj.LoginID).To(Equal(1))
-				})
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("PATCH", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
 			})
 
-			Context("when user does not exist", func() {
-				BeforeEach(func() {
-					testBody = map[string]interface{}{
-						"username": "testuser",
-						"email":    "test@example.com",
-						"password": "testpassword",
-					}
+			It("should return 200 OK and update user in Redis", func() {
+				router.ServeHTTP(w, r)
+				Expect(w.Code).To(Equal(http.StatusOK))
 
-					jsonBytes, err = json.Marshal(testBody)
-					Expect(err).ToNot(HaveOccurred())
+				var responseBody map[string]interface{}
+				err := json.Unmarshal(w.Body.Bytes(), &responseBody)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(responseBody["user_id"]).ToNot(BeNil())
+				Expect(responseBody["message"]).To(ContainSubstring("User updated successfully"))
 
-					w = httptest.NewRecorder()
-					r = httptest.NewRequest("PATCH", "/apis/v1/user/12", bytes.NewBuffer(jsonBytes))
-					r.Header.Set("Content-Type", "application/json")
-				})
+				redisResult, err := fakeSocialMediaHandler.RedisReader.Get("user:1").Result()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(redisResult).ToNot(BeNil())
 
-				It("should return not found error", func() {
-					router.ServeHTTP(w, r)
-					Expect(w.Code).To(Equal(http.StatusNotFound))
-				})
+				fmt.Println(redisResult)
+
+				var userObj userReturn
+				err = json.Unmarshal([]byte(redisResult), &userObj)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(userObj.Username).To(Equal("testuser_updated"))
+				Expect(userObj.ID).To(Equal(1))
+				Expect(userObj.LoginID).To(Equal(1))
+			})
+		})
+
+		Context("when user does not exist", func() {
+			BeforeEach(func() {
+				testBody = map[string]interface{}{
+					"username": "nonexistent",
+				}
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
+
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("PATCH", "/apis/v1/user/999", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
 			})
 
-			Context("when request body is not correct", func() {
-				BeforeEach(func() {
-					w = httptest.NewRecorder()
-					r = httptest.NewRequest("PATCH", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
-					r.Header.Set("Content-Type", "application/json")
-				})
+			It("should return 404 Not Found", func() {
+				router.ServeHTTP(w, r)
+				Expect(w.Code).To(Equal(http.StatusNotFound))
+			})
+		})
 
-				It("should return not bad request", func() {
-					router.ServeHTTP(w, r)
-					Expect(w.Code).To(Equal(http.StatusBadRequest))
-				})
+		Context("when request body has unexpected fields", func() {
+			BeforeEach(func() {
+				testBody = map[string]interface{}{
+					"username":    "testuser",
+					"email":       "test@example.com",
+					"password":    "testpassword",
+					"randomField": "should not be here",
+				}
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
+
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("PATCH", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
+			})
+
+			It("should return 400 Bad Request", func() {
+				router.ServeHTTP(w, r)
+				Expect(w.Code).To(Equal(http.StatusBadRequest))
+			})
+		})
+
+		Context("when request body includes forbidden fields like loginID", func() {
+			BeforeEach(func() {
+				testBody = map[string]interface{}{
+					"username": "testuser",
+					"email":    "test@example.com",
+					"password": "testpassword",
+					"loginID":  1,
+				}
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
+
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("PATCH", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
+			})
+
+			It("should return 400 Bad Request", func() {
+				router.ServeHTTP(w, r)
+				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
 		})
 	})
