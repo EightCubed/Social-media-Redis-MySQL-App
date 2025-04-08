@@ -15,7 +15,7 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	log.Printf("[INFO] UpdateUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	vars := mux.Vars(r)
-	userID, err := strconv.Atoi(vars["user"])
+	userID, err := strconv.Atoi(vars["user_id"])
 	if err != nil {
 		log.Printf("[ERROR] Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -23,19 +23,28 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var updatedUser models.User
-	err = json.NewDecoder(r.Body).Decode(&updatedUser)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&updatedUser)
 	if err != nil {
+		log.Printf("[INFO] uni12719 updatedUser: %v", updatedUser)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("[INFO] uni12719 updatedUser: %v", updatedUser)
 
 	updates := map[string]interface{}{}
 	if updatedUser.Username != "" {
 		updates["username"] = updatedUser.Username
 	}
-	if updatedUser.Email != "" {
-		updates["email"] = updatedUser.Email
+
+	if len(updates) == 0 {
+		http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
+		return
 	}
+
+	log.Printf("[INFO] uni12719 updates: %v", updates)
 
 	result := h.DBWriter.Model(&models.User{}).Where("id = ?", userID).Updates(updates)
 
@@ -54,7 +63,7 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	var resultUser models.User
 	result = h.DBReader.First(&resultUser, userID)
 
-	cacheKey := fmt.Sprintf("post:%d", resultUser.ID)
+	cacheKey := fmt.Sprintf("user:%d", resultUser.ID)
 	marshalledUser, err := json.Marshal(resultUser)
 	if err != nil {
 		log.Printf("[ERROR] Marshal error: %v", err)
@@ -65,6 +74,7 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	log.Printf("[INFO] Successfully updated user with ID: %d", userID)
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "User updated successfully",
