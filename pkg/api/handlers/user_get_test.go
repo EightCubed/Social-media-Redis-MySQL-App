@@ -61,7 +61,7 @@ var _ = Describe("UserGet", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(responseBody["Username"]).To(Equal("testuser"))
 				redisResult, err := fakeSocialMediaHandler.RedisReader.Get("user:1").Result()
-				var userObj userReturn
+				var userObj UserObject
 				Expect(err).ToNot(HaveOccurred())
 				err = json.Unmarshal([]byte(redisResult), &userObj)
 				Expect(err).ToNot(HaveOccurred())

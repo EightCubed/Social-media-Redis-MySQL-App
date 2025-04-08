@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type userReturn struct {
+type UserObject struct {
 	ID        int    `json:"ID"`
 	CreatedAt string `json:"CreatedAt"`
 	UpdatedAt string `json:"UpdatedAt"`
@@ -60,7 +60,7 @@ var _ = Describe("UserPost", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(responseBody["message"]).To(Equal("User created successfully"))
 			redisResult, err := fakeSocialMediaHandler.RedisReader.Get("user:1").Result()
-			var userObj userReturn
+			var userObj UserObject
 			Expect(err).ToNot(HaveOccurred())
 			err = json.Unmarshal([]byte(redisResult), &userObj)
 			Expect(err).ToNot(HaveOccurred())
@@ -85,7 +85,7 @@ var _ = Describe("UserPost", func() {
 				r.Header.Set("Content-Type", "application/json")
 			})
 
-			It("should handle valid JSON body and return success", func() {
+			It("should return Bad request", func() {
 				router.ServeHTTP(w, r)
 				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
