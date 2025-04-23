@@ -23,7 +23,9 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var updatedPost models.Post
-	err = json.NewDecoder(r.Body).Decode(&updatedPost)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&updatedPost)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -35,6 +37,11 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	}
 	if updatedPost.Content != "" {
 		updates["content"] = updatedPost.Content
+	}
+
+	if len(updates) == 0 {
+		log.Print("[ERROR] Nothing to update")
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
 	}
 
 	result := h.DBWriter.Model(&models.Post{}).Where("id = ?", postID).Updates(updates)

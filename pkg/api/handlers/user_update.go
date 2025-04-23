@@ -27,12 +27,9 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&updatedUser)
 	if err != nil {
-		log.Printf("[INFO] uni12719 updatedUser: %v", updatedUser)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("[INFO] uni12719 updatedUser: %v", updatedUser)
 
 	updates := map[string]interface{}{}
 	if updatedUser.Username != "" {
@@ -43,8 +40,6 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("[INFO] uni12719 updates: %v", updates)
 
 	result := h.DBWriter.Model(&models.User{}).Where("id = ?", userID).Updates(updates)
 

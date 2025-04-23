@@ -3,7 +3,6 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -69,8 +68,6 @@ var _ = Describe("UserUpdate", func() {
 				redisResult, err := fakeSocialMediaHandler.RedisReader.Get("user:1").Result()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(redisResult).ToNot(BeNil())
-
-				fmt.Println(redisResult)
 
 				var userObj UserObject
 				err = json.Unmarshal([]byte(redisResult), &userObj)

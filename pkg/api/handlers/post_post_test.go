@@ -3,7 +3,6 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -101,8 +100,6 @@ var _ = Describe("PostPost", func() {
 
 				It("should return bad request", func() {
 					router.ServeHTTP(w, r)
-					fmt.Println(w)
-					fmt.Println(r.Body)
 					Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
 					Expect(w.Code).To(Equal(http.StatusBadRequest))
 				})
