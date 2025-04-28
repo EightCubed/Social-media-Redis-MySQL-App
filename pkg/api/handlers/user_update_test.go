@@ -69,7 +69,7 @@ var _ = Describe("UserUpdate", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(redisResult).ToNot(BeNil())
 
-				var userObj userReturn
+				var userObj UserObject
 				err = json.Unmarshal([]byte(redisResult), &userObj)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(userObj.Username).To(Equal("testuser_updated"))
