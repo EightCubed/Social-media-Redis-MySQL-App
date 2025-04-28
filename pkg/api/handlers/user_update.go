@@ -56,7 +56,7 @@ func (h *SocialMediaHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var resultUser models.User
-	result = h.DBReader.First(&resultUser, userID)
+	_ = h.DBReader.First(&resultUser, userID)
 
 	cacheKey := fmt.Sprintf("user:%d", resultUser.ID)
 	marshalledUser, err := json.Marshal(resultUser)

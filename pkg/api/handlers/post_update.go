@@ -59,7 +59,7 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var resultPost models.Post
-	result = h.DBReader.First(&resultPost, postID)
+	_ = h.DBReader.First(&resultPost, postID)
 
 	cacheKey := fmt.Sprintf("post:%d", resultPost.ID)
 	marshalledPost, err := json.Marshal(resultPost)

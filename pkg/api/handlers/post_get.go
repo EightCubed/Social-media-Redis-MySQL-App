@@ -48,7 +48,7 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		post.Views = views
 	}
 
-	likes, err := h.getLikesFromCache(likesKey, postID)
+	likes, _ := h.getLikesFromCache(likesKey, postID)
 
 	getPostReply.Post = *post
 	getPostReply.NumberOfLikes = likes

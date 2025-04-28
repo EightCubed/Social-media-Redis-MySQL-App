@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -76,8 +77,50 @@ var _ = FDescribe("PostUpdate", func() {
 			var responseBody map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &responseBody)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(responseBody["post_id"]).To(Equal(1))
+			fmt.Println("responseBody", responseBody)
+			Expect(responseBody["post_id"]).To(Equal(float64(1)))
 			Expect(responseBody["message"]).To(Equal("Post updated successfully"))
+		})
+	})
+
+	Context("when request body is not valid", func() {
+		BeforeEach(func() {
+			testBody = map[string]interface{}{
+				"title":   "Update title #1",
+				"content": "Updated content Ut enim ad minim veniam, ullamco laboris nisi ut aliquip ex ea commodo consequat",
+				"extra":   "field",
+			}
+			jsonBytes, err = json.Marshal(testBody)
+			Expect(err).ToNot(HaveOccurred())
+
+			w = httptest.NewRecorder()
+			r = httptest.NewRequest("PATCH", "/apis/v1/post/1", bytes.NewBuffer(jsonBytes))
+			r.Header.Set("Content-Type", "application/json")
+		})
+
+		It("should return error", func() {
+			router.ServeHTTP(w, r)
+			Expect(w.Code).To(Equal(http.StatusBadRequest))
+		})
+	})
+
+	Context("when post does not exist", func() {
+		BeforeEach(func() {
+			testBody = map[string]interface{}{
+				"title":   "Update title #1",
+				"content": "Updated content Ut enim ad minim veniam, ullamco laboris nisi ut aliquip ex ea commodo consequat",
+			}
+			jsonBytes, err = json.Marshal(testBody)
+			Expect(err).ToNot(HaveOccurred())
+
+			w = httptest.NewRecorder()
+			r = httptest.NewRequest("PATCH", "/apis/v1/post/2", bytes.NewBuffer(jsonBytes))
+			r.Header.Set("Content-Type", "application/json")
+		})
+
+		It("should return error", func() {
+			router.ServeHTTP(w, r)
+			Expect(w.Code).To(Equal(http.StatusNotFound))
 		})
 	})
 })
