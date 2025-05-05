@@ -32,7 +32,7 @@ func (h *SocialMediaHandler) DeleteComment(w http.ResponseWriter, r *http.Reques
 
 	if result.RowsAffected == 0 {
 		log.Printf("[WARN] No comment found with ID: %d", commentID)
-		http.Error(w, "Post not found", http.StatusNotFound)
+		http.Error(w, "Comment not found", http.StatusNotFound)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *SocialMediaHandler) DeleteComment(w http.ResponseWriter, r *http.Reques
 	log.Printf("[INFO] Successfully deleted post with ID: %d", commentID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Post deleted successfully",
+		"message": "Comment deleted successfully",
 		"post_id": commentID,
 	})
 }
