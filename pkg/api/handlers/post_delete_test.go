@@ -55,35 +55,33 @@ var _ = Describe("PostUpdate", func() {
 		r.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, r)
 		Expect(w.Code).To(Equal(http.StatusCreated))
-
-		testBody = map[string]interface{}{
-			"user_id": 1,
-			"title":   "Post title #2",
-			"content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
-		}
-		jsonBytes, err = json.Marshal(testBody)
-		Expect(err).ToNot(HaveOccurred())
-
-		w = httptest.NewRecorder()
-		r = httptest.NewRequest("POST", "/apis/v1/post", bytes.NewBuffer(jsonBytes))
-		r.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(w, r)
-		Expect(w.Code).To(Equal(http.StatusCreated))
 	})
 
 	Describe("GET /apis/v1/post", func() {
 		Context("when the post exists", func() {
 			It("returns a successful response with post data", func() {
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest("GET", "/apis/v1/post", nil)
+				r := httptest.NewRequest("DELETE", "/apis/v1/post/1", nil)
 				r.Header.Set("Content-Type", "application/json")
 				router.ServeHTTP(w, r)
 
 				Expect(w.Code).To(Equal(http.StatusOK))
-				var responseBody []map[string]interface{}
+				var responseBody map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &responseBody)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(responseBody).To(HaveLen(2))
+			})
+		})
+
+		Context("when the post does not exist", func() {
+			It("returns a successful response with post data", func() {
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest("DELETE", "/apis/v1/post/12", nil)
+				r.Header.Set("Content-Type", "application/json")
+				router.ServeHTTP(w, r)
+
+				Expect(w.Code).To(Equal(http.StatusNotFound))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(w.Body.String()).To(Equal("Post not found\n"))
 			})
 		})
 	})
