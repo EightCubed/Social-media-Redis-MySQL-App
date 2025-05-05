@@ -27,6 +27,18 @@ func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var user models.User
+	if err := h.DBReader.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	var post models.Post
+	if err := h.DBReader.First(&post, postID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
 	var like models.Like
 	like.PostID = uint(postID)
 	like.UserID = uint(userID)
