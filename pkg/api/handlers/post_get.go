@@ -35,6 +35,9 @@ func (h *SocialMediaHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	// Attempt to retrieve from cache first
 	post, err := h.getPostFromCache(postKey, postID)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			http.Error(w, "Post not found", http.StatusNotFound)
+		}
 		log.Printf("[ERROR] Failed to retrieve post - ID: %d, Error: %v", postID, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -83,7 +86,7 @@ func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.P
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			log.Printf("[WARN] Post not found in database - ID: %d", id)
-			return nil, fmt.Errorf("post not found")
+			return nil, gorm.ErrRecordNotFound
 		}
 		log.Printf("[ERROR] Database query failed - ID: %d, Error: %v", id, result.Error)
 		return nil, result.Error
@@ -100,7 +103,6 @@ func (h *SocialMediaHandler) getPostFromCache(postKey string, id int) (*models.P
 			log.Printf("[INFO] Post successfully cached - Key: %s, PostID: %d", postKey, id)
 		}
 	}
-
 	return &post, nil
 }
 

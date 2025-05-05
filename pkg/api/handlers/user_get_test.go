@@ -26,28 +26,26 @@ var _ = Describe("UserGet", func() {
 
 	fakeSocialMediaHandler, router = createFakeSocialMediaHandlerAndRouter()
 
+	BeforeEach(func() {
+		// Creating a User
+		testBody = map[string]interface{}{
+			"username": "testuser",
+			"email":    "test@example.com",
+			"password": "testpassword",
+		}
+
+		jsonBytes, err = json.Marshal(testBody)
+		Expect(err).ToNot(HaveOccurred())
+
+		w = httptest.NewRecorder()
+		r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
+		r.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(w, r)
+	})
+
 	Context("when get function is called", func() {
 		Context("when user exists", func() {
 			BeforeEach(func() {
-				testBody = map[string]interface{}{
-					"username": "testuser",
-					"email":    "test@example.com",
-					"password": "testpassword",
-				}
-
-				jsonBytes, err = json.Marshal(testBody)
-				Expect(err).ToNot(HaveOccurred())
-
-				w = httptest.NewRecorder()
-				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
-				r.Header.Set("Content-Type", "application/json")
-				router.ServeHTTP(w, r)
-
-				w = httptest.NewRecorder()
-				r = httptest.NewRequest("LIST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
-				r.Header.Set("Content-Type", "application/json")
-				router.ServeHTTP(w, r)
-
 				w = httptest.NewRecorder()
 				r = httptest.NewRequest("GET", "/apis/v1/user/1", bytes.NewBuffer(jsonBytes))
 				r.Header.Set("Content-Type", "application/json")
