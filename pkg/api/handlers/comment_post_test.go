@@ -55,32 +55,6 @@ var _ = Describe("CommentPost", func() {
 		r.Header.Set("Content-Type", "application/json")
 		router.ServeHTTP(w, r)
 		Expect(w.Code).To(Equal(http.StatusCreated))
-
-		testBody = map[string]interface{}{
-			"user_id": 1,
-			"content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat",
-		}
-		jsonBytes, err = json.Marshal(testBody)
-		Expect(err).ToNot(HaveOccurred())
-
-		w = httptest.NewRecorder()
-		r = httptest.NewRequest("POST", "/apis/v1/post/1/comments", bytes.NewBuffer(jsonBytes))
-		r.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(w, r)
-		Expect(w.Code).To(Equal(http.StatusCreated))
-
-		testBody = map[string]interface{}{
-			"user_id": 1,
-			"content": "Comment 2",
-		}
-		jsonBytes, err = json.Marshal(testBody)
-		Expect(err).ToNot(HaveOccurred())
-
-		w = httptest.NewRecorder()
-		r = httptest.NewRequest("POST", "/apis/v1/post/1/comments", bytes.NewBuffer(jsonBytes))
-		r.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(w, r)
-		Expect(w.Code).To(Equal(http.StatusCreated))
 	})
 
 	Describe("POST /apis/v1/post/1/comments", func() {

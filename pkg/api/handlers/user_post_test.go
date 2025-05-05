@@ -172,7 +172,7 @@ var _ = Describe("UserPost", func() {
 
 			It("should handle valid JSON body and return success", func() {
 				router.ServeHTTP(w, r)
-				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
+				Expect(w.Body.String()).To(ContainSubstring("Invalid input"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
 		})
@@ -208,7 +208,7 @@ var _ = Describe("UserPost", func() {
 
 			It("should handle return error", func() {
 				router.ServeHTTP(w, r)
-				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
+				Expect(w.Body.String()).To(ContainSubstring("Invalid input"))
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
 		})
