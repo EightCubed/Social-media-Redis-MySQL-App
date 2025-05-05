@@ -39,6 +39,12 @@ func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Reques
 		updates["content"] = updatedComment.Content
 	}
 
+	var comment models.Comment
+	if err := h.DBReader.First(&comment, commentID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
 	result := h.DBWriter.Model(&models.Comment{}).Omit("Post", "User").Where("id = ?", commentID).Updates(updates)
 
 	if result.Error != nil {
@@ -64,7 +70,7 @@ func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Reques
 	log.Printf("[INFO] Successfully updated user with ID: %d", commentID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "User updated successfully",
+		"message": "Comment updated successfully",
 		"user_id": commentID,
 	})
 }
