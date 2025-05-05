@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("PostPost", func() {
+var _ = Describe("LikePost", func() {
 	var (
 		router *mux.Router
 	)

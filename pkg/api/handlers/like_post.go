@@ -42,6 +42,12 @@ func (h *SocialMediaHandler) LikePost(w http.ResponseWriter, r *http.Request) {
 	var like models.Like
 	like.PostID = uint(postID)
 	like.UserID = uint(userID)
+
+	if err := h.DBReader.Where("post_id = ? AND user_id = ?", postID, userID).First(&like).Error; err == nil {
+		http.Error(w, "User already liked this post", http.StatusOK)
+		return
+	}
+
 	if err := h.DBWriter.Create(&like).Error; err != nil {
 		log.Printf("[ERROR] Database insertion failed: %v", err)
 		http.Error(w, "Failed to add like", http.StatusInternalServerError)
