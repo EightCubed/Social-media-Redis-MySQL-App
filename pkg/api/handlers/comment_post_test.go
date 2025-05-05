@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("CommentPost", func() {
+var _ = Describe("CommentPost", func() {
 	var (
 		testBody  map[string]interface{}
 		router    *mux.Router
