@@ -9,6 +9,7 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func DatabaseWriterInit(config config.Config) (*gorm.DB, error) {
@@ -63,7 +64,9 @@ func DatabaseReaderInit(config config.Config) (*gorm.DB, error) {
 
 	log.Printf("Connecting to read database...")
 
-	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		log.Printf("Failed to open read database connection: %v", err)
 		return nil, fmt.Errorf("failed to open database connection: %v", err)

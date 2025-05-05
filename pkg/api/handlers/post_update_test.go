@@ -3,7 +3,6 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 
@@ -77,7 +76,6 @@ var _ = Describe("PostUpdate", func() {
 			var responseBody map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &responseBody)
 			Expect(err).ToNot(HaveOccurred())
-			fmt.Println("responseBody", responseBody)
 			Expect(responseBody["post_id"]).To(Equal(float64(1)))
 			Expect(responseBody["message"]).To(ContainSubstring("Post updated successfully"))
 		})

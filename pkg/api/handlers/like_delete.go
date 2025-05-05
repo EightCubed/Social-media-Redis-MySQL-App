@@ -28,9 +28,27 @@ func (h *SocialMediaHandler) LikeDelete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	var user models.User
+	if err := h.DBReader.First(&user, userID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	var post models.Post
+	if err := h.DBReader.First(&post, postID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
 	like := &models.Like{
 		PostID: uint(postID),
 		UserID: uint(userID),
+	}
+
+	if err := h.DBReader.Where("post_id = ? AND user_id = ?", postID, userID).First(&like).Error; err != nil {
+		log.Printf("[WARN] Like not found for PostID: %d by UserID: %d", postID, userID)
+		http.Error(w, "Like not found", http.StatusNotFound)
+		return
 	}
 
 	result := h.DBWriter.Unscoped().Delete(&models.Like{}, like)
