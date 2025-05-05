@@ -28,7 +28,9 @@ func (h *SocialMediaHandler) PostComment(w http.ResponseWriter, r *http.Request)
 	}
 
 	var commentBody CommentPostBody
-	if err := json.NewDecoder(r.Body).Decode(&commentBody); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&commentBody); err != nil {
 		log.Printf("[ERROR] Failed to decode request body: %v", err)
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -38,6 +40,18 @@ func (h *SocialMediaHandler) PostComment(w http.ResponseWriter, r *http.Request)
 		PostID:  uint(postID),
 		UserID:  uint(commentBody.UserID),
 		Content: commentBody.Content,
+	}
+
+	var user models.User
+	if err := h.DBReader.First(&user, comment.UserID).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	var post models.Post
+	if err := h.DBReader.First(&post, postID).Error; err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
 	}
 
 	log.Printf("[INFO] Adding new comment - PostID: %d, UserID: %d", comment.PostID, comment.UserID)

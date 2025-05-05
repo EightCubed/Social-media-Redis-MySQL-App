@@ -25,8 +25,7 @@ func (h *SocialMediaHandler) UpdatePost(w http.ResponseWriter, r *http.Request) 
 	var updatedPost models.Post
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&updatedPost)
-	if err != nil {
+	if err = decoder.Decode(&updatedPost); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}

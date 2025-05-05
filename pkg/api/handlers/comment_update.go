@@ -27,8 +27,9 @@ func (h *SocialMediaHandler) UpdateComment(w http.ResponseWriter, r *http.Reques
 	}
 
 	var updatedComment CommentUpdateBody
-	err = json.NewDecoder(r.Body).Decode(&updatedComment)
-	if err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err = decoder.Decode(&updatedComment); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
