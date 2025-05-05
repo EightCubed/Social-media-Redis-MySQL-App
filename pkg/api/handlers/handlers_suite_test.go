@@ -3,6 +3,8 @@ package handlers_test
 import (
 	"go-social-media/pkg/api/handlers"
 	"go-social-media/pkg/database"
+	"io"
+	"log"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -17,7 +19,7 @@ import (
 
 func TestHandlers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	// log.SetOutput(io.Discard)
+	log.SetOutput(io.Discard)
 	RunSpecs(t, "Handlers Suite")
 }
 

@@ -21,7 +21,9 @@ func (h *SocialMediaHandler) PostUser(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] PostUser handler called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
 	var body UserPostBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&body); err != nil {
 		log.Printf("[ERROR] Failed to decode request body: %v", err)
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
