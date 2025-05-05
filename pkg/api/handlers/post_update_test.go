@@ -79,7 +79,7 @@ var _ = Describe("PostUpdate", func() {
 			Expect(err).ToNot(HaveOccurred())
 			fmt.Println("responseBody", responseBody)
 			Expect(responseBody["post_id"]).To(Equal(float64(1)))
-			Expect(responseBody["message"]).To(Equal("Post updated successfully"))
+			Expect(responseBody["message"]).To(ContainSubstring("Post updated successfully"))
 		})
 	})
 

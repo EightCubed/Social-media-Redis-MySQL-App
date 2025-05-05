@@ -176,5 +176,41 @@ var _ = Describe("UserPost", func() {
 				Expect(w.Code).To(Equal(http.StatusBadRequest))
 			})
 		})
+
+		Context("duplicate user is added field is added", func() {
+			BeforeEach(func() {
+				testBody = map[string]interface{}{
+					"username": "testuser",
+					"email":    "test@example.com",
+					"loginID":  1,
+				}
+
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
+
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
+
+				testBody = map[string]interface{}{
+					"username": "testuser",
+					"email":    "test@example.com",
+					"loginID":  1,
+				}
+
+				jsonBytes, err = json.Marshal(testBody)
+				Expect(err).ToNot(HaveOccurred())
+
+				w = httptest.NewRecorder()
+				r = httptest.NewRequest("POST", "/apis/v1/user", bytes.NewBuffer(jsonBytes))
+				r.Header.Set("Content-Type", "application/json")
+			})
+
+			It("should handle return error", func() {
+				router.ServeHTTP(w, r)
+				Expect(w.Body.String()).To(ContainSubstring("Missing required fields"))
+				Expect(w.Code).To(Equal(http.StatusBadRequest))
+			})
+		})
 	})
 })

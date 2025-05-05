@@ -78,4 +78,14 @@ func registerRoutes(router *mux.Router, socialMediaHandler *handlers.SocialMedia
 	apiRouter.HandleFunc("/post/{post_id:[0-9]+}", socialMediaHandler.GetPost).Methods("GET")
 	apiRouter.HandleFunc("/post/{post_id:[0-9]+}", socialMediaHandler.UpdatePost).Methods("PATCH")
 	apiRouter.HandleFunc("/post/{post_id:[0-9]+}", socialMediaHandler.DeletePost).Methods("DELETE")
+
+	// Like endpoints
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/likes", socialMediaHandler.LikePost).Methods("POST")
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/likes", socialMediaHandler.LikeDelete).Methods("DELETE")
+
+	// Comment endpoints
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.ListComments).Methods("GET")
+	apiRouter.HandleFunc("/post/{post_id:[0-9]+}/comments", socialMediaHandler.PostComment).Methods("POST")
+	apiRouter.HandleFunc("/comments/{comment_id:[0-9]+}", socialMediaHandler.UpdateComment).Methods("PATCH")
+	apiRouter.HandleFunc("/comments/{comment_id:[0-9]+}", socialMediaHandler.DeleteComment).Methods("DELETE")
 }
